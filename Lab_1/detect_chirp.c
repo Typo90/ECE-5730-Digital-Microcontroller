@@ -52,17 +52,6 @@
 // Define the LED pin
 #define LED     25
 
-// === the fixed point macros (16.15) ========================================
-typedef signed int fix15 ;
-#define multfix15(a,b) ((fix15)((((signed long long)(a))*((signed long long)(b)))>>15))
-#define float2fix15(a) ((fix15)((a)*32768.0)) 
-#define fix2float15(a) ((float)(a)/32768.0)
-#define absfix15(a) abs(a) 
-#define int2fix15(a) ((fix15)(a << 15))
-#define fix2int15(a) ((int)(a >> 15))
-#define char2fix15(a) (fix15)(((fix15)(a)) << 15)
-#define divfix(a,b) (fix15)( (((signed long long)(a)) << 15) / (b))
-
 /////////////////////////// ADC configuration ////////////////////////////////
 // ADC Channel and pin
 #define ADC_CHAN 0
@@ -196,7 +185,15 @@ void FFTfix(fix15 fr[], fix15 fi[]) {
 //=====================FFT==========================
 
 // Macros for fixed-point arithmetic (faster than floating point)
-
+typedef signed int fix15 ;
+#define multfix15(a,b) ((fix15)((((signed long long)(a))*((signed long long)(b)))>>15))
+#define float2fix15(a) ((fix15)((a)*32768.0)) 
+#define fix2float15(a) ((float)(a)/32768.0)
+#define absfix15(a) abs(a) 
+#define int2fix15(a) ((fix15)(a << 15))
+#define fix2int15(a) ((int)(a >> 15))
+#define char2fix15(a) (fix15)(((fix15)(a)) << 15)
+#define divfix(a,b) (fix15)( (((signed long long)(a)) << 15) / (b))
 
 //Direct Digital Synthesis (DDS) parameters
 #define two32 4294967296.0  // 2^32 (a constant)
@@ -267,7 +264,7 @@ uint16_t DAC_data_0 ; // output value
 #define LED      25
 #define SPI_PORT spi0
 
-#define BUTTON_ONE 15 //pause
+#define BUTTON_ONE 13 //pause
 #define BUTTON_TWO 14 //start
 
 // Two variables to store core number
@@ -285,10 +282,17 @@ struct pt_sem core_1_go, core_0_go ;
 bool repeating_timer_callback_core_1(struct repeating_timer *t) {
 
     if(gpio_get(BUTTON_ONE) == 0){  
-        //printf("button one touche\n");
-        pause_flag_0 = 1;
-    }else{
-        pause_flag_0 = 0;
+
+
+        if(pause_flag_0 == 1){
+            pause_flag_0 = 0;
+            gpio_put(LED, 0) ;
+        }else{
+            pause_flag_0 = 1;
+            gpio_put(LED, 1) ;
+        }
+
+        
     }
 
     if (pause_flag_0 == 0){
@@ -385,11 +389,15 @@ bool repeating_timer_callback_core_0(struct repeating_timer *t) {
 
 
     if(gpio_get(BUTTON_TWO) == 0){  
-        //printf("button two touche\n");
-        pause_flag_1 = 1;
-        
-    }else{
-        pause_flag_1 = 0;
+
+        if(pause_flag_1 == 1){
+            pause_flag_1 = 0;
+            gpio_put(LED, 0) ;
+        }else{
+            pause_flag_1 = 1;
+            gpio_put(LED, 1) ;
+        }
+
     }
 
     if(pause_flag_1 == 0){
@@ -435,6 +443,7 @@ bool repeating_timer_callback_core_0(struct repeating_timer *t) {
                 count_0 = 0 ;
                 beep_count_1 += 1;
             }
+            
         }
 
         else if (STATE_0 == 2){
@@ -640,26 +649,14 @@ static PT_THREAD (protothread_fft(struct pt *pt))
         // Compute max frequency in Hz
         max_freqency = max_fr_dex * (Fs/NUM_SAMPLES) ;
         //printf("%f",max_freqency);
-        if((int)max_freqency >= 2300){
-
-
-            if(pause_flag_1 == 1 && pause_flag_0 == 0){
+        if((int)max_freqency == 2314){
+            if(STATE_0 == 1 && STATE_1 == 1){
+                printf("Synchronized Chirp!\n");
+            }else if(STATE_0 != 1 && STATE_1 == 1){
                 printf("Core1 is now generated Chirp!\n");
-            }else if(pause_flag_1 == 0 && pause_flag_0 == 1){
-                printf("Core0 is now generated Chirp!\n");
-            }else if(pause_flag_1 == 0 && pause_flag_0 == 0){
-                
-                if(STATE_0 == 1 && STATE_1 == 1){
-                    int jjjj = 0;
-                    //printf("Synchronized Chirp!\n");
-                }else if(STATE_0 != 0 && STATE_1 == 0 ){
-                    printf("Core1 is now generated Chirp!\n");
-                }else if(STATE_0 == 0 && STATE_1 != 0){
-                    printf("Core2 is now generated Chirp!\n");
-                }
-
+            }else if(STATE_0 == 1 && STATE_1 != 1){
+                printf("Core2 is now generated Chirp!\n");
             }
-
         }
 
 
@@ -816,7 +813,7 @@ int main() {
 
     // Build the sine lookup table
     // scaled to produce values between 0 and 4096 (for 12-bit DAC)
-    //ii;
+    int ii;
     for (ii = 0; ii < sine_table_size; ii++){
          sin_table[ii] = float2fix15(2047*sin((float)ii*6.283/(float)sine_table_size));
     }
