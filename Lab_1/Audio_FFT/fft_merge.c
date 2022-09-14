@@ -200,16 +200,16 @@ void FFTfix(fix15 fr[], fix15 fi[]) {
 
 //Direct Digital Synthesis (DDS) parameters
 #define two32 4294967296.0  // 2^32 (a constant)
-#define FFs 40000            // sample rate
+#define Fs 40000            // sample rate
 
 // the DDS units - core 1
 // Phase accumulator and phase increment. Increment sets output frequency.
 volatile unsigned int phase_accum_main_1;                  
-volatile unsigned int phase_incr_main_1 = (2300.0*two32)/FFs ;
+volatile unsigned int phase_incr_main_1 = (2300.0*two32)/Fs ;
 // the DDS units - core 2
 // Phase accumulator and phase increment. Increment sets output frequency.
 volatile unsigned int phase_accum_main_0;
-volatile unsigned int phase_incr_main_0 = (2300.0*two32)/FFs ;
+volatile unsigned int phase_incr_main_0 = (2300.0*two32)/Fs ;
 
 // DDS sine table (populated in main())
 #define sine_table_size 256
@@ -243,11 +243,6 @@ volatile unsigned int STATE_0 = 0 ;
 volatile unsigned int count_0 = 0 ;
 volatile unsigned int STATE_1 = 0 ;
 volatile unsigned int count_1 = 0 ;
-
-//syn-count
-volatile unsigned int count_0_incre = 0 ;
-volatile unsigned int count_1_incre = 0 ;
-volatile unsigned int e = 10;
 
 volatile unsigned int beep_count = 0 ;
 volatile unsigned int beep_count_1 = 0 ;
@@ -334,7 +329,7 @@ bool repeating_timer_callback_core_1(struct repeating_timer *t) {
             }
 
             //State transition?
-            if (count_1 >= BEEP_DURATION) {
+            if (count_1 == BEEP_DURATION) {
                 STATE_1 = 2 ;
                 count_1 = 0 ;
                 beep_count += 1;
@@ -344,7 +339,7 @@ bool repeating_timer_callback_core_1(struct repeating_timer *t) {
 
         else if (STATE_1 == 2){
             count_1 += 1 ;
-            if (count_1 >= pulse_time){
+            if (count_1 == pulse_time){
                 current_amplitude_1 = 0 ;
                 STATE_1 = 0 ;
                 count_1 = 0 ;
@@ -353,8 +348,8 @@ bool repeating_timer_callback_core_1(struct repeating_timer *t) {
 
         // State transition?
         else if (STATE_1 == 1){
-            count_1 = count_1 + 1;
-            if (count_1 >= BEEP_REPEAT_INTERVAL) {
+            count_1 += 1 ;
+            if (count_1 == BEEP_REPEAT_INTERVAL) {
                 current_amplitude_1 = 0 ;
                 STATE_1 = 0 ;
                 count_1 = 0 ;
@@ -435,7 +430,7 @@ bool repeating_timer_callback_core_0(struct repeating_timer *t) {
             }
 
             //State transition?
-            if (count_0 >= BEEP_DURATION) {
+            if (count_0 == BEEP_DURATION) {
                 STATE_0 = 2 ;
                 count_0 = 0 ;
                 beep_count_1 += 1;
@@ -444,7 +439,7 @@ bool repeating_timer_callback_core_0(struct repeating_timer *t) {
 
         else if (STATE_0 == 2){
             count_0 += 1 ;
-            if (count_0 >= pulse_time){
+            if (count_0 == pulse_time){
                 current_amplitude_0 = 0 ;
                 STATE_0 = 0 ;
                 count_0 = 0 ;
@@ -453,8 +448,8 @@ bool repeating_timer_callback_core_0(struct repeating_timer *t) {
 
         // State transition?
         else if (STATE_0 == 1){
-            count_0 = count_0 + 1;
-            if (count_0 >= BEEP_REPEAT_INTERVAL) {
+            count_0 += 1 ;
+            if (count_0 == BEEP_REPEAT_INTERVAL) {
                 current_amplitude_0 = 0 ;
                 STATE_0 = 0 ;
                 count_0 = 0 ;
@@ -573,7 +568,7 @@ static PT_THREAD (protothread_fft(struct pt *pt))
 {
     // Indicate beginning of thread
     PT_BEGIN(pt) ;
-    printf("Starting capture 0914\n") ;
+    printf("Starting capture 222\n") ;
     // Start the ADC channel
     dma_start_channel_mask((1u << sample_chan)) ;
     // Start the ADC
@@ -648,37 +643,20 @@ static PT_THREAD (protothread_fft(struct pt *pt))
         if((int)max_freqency >= 2300){
 
 
-            //pause flag == 0 means chirp
-            // core_0 use pause_flag_1
-
-
-
-            if(pause_flag_1 == 0 && pause_flag_0 == 1){
-                printf("Core0 is now generated Chirp!\n");
-                count_1 =  e + (int)sqrt(count_1);
-                count_1 = count_1 * count_1;
-            }else if(pause_flag_1 == 1 && pause_flag_0 == 0){
-            
+            if(pause_flag_1 == 1 && pause_flag_0 == 0){
                 printf("Core1 is now generated Chirp!\n");
-                count_0 =  e + (int)sqrt(count_0);
-                count_0 = count_0 * count_0;
+            }else if(pause_flag_1 == 0 && pause_flag_0 == 1){
+                printf("Core0 is now generated Chirp!\n");
             }else if(pause_flag_1 == 0 && pause_flag_0 == 0){
                 
                 if(STATE_0 == 1 && STATE_1 == 1){
                     int jjjj = 0;
                     //printf("Synchronized Chirp!\n");
                 }else if(STATE_0 != 0 && STATE_1 == 0 ){
-                    
                     printf("Core1 is now generated Chirp!\n");
-                    count_0 =  e + (int)sqrt(count_0);
-                    count_0 = count_0 * count_0;
                 }else if(STATE_0 == 0 && STATE_1 != 0){
-                    printf("Core0 is now generated Chirp!\n");
-                    count_1 =  e + (int)sqrt(count_1);
-                    count_1 = count_1 * count_1;
+                    printf("Core2 is now generated Chirp!\n");
                 }
-
-
 
             }
 
