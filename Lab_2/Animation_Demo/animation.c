@@ -51,10 +51,51 @@ typedef signed int fix15 ;
 #define divfix(a,b) (fix15)(div_s64s64( (((signed long long)(a)) << 15), ((signed long long)(b))))
 
 // Wall detection
-#define hitBottom(b) (b>int2fix15(380))
-#define hitTop(b) (b<int2fix15(100))
-#define hitLeft(a) (a<int2fix15(100))
-#define hitRight(a) (a>int2fix15(540))
+// #define hitBottom(b) (b>int2fix15(380))
+// #define hitTop(b) (b<int2fix15(100))
+// #define hitLeft(a) (a<int2fix15(100))
+// #define hitRight(a) (a>int2fix15(540))
+
+int top = 100;
+int bottom = 380;
+int left = 100;
+int right = 540;
+
+bool hitBottom(fix15* b){
+  if(b > int2fix15(bottom)){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+bool hitTop(fix15* b){
+  if(b > int2fix15(top)){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+bool hitLeft(fix15* b){
+  if(b > int2fix15(left)){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+bool hitRight(fix15* b){
+  if(b > int2fix15(right)){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+//max and min
+#define min(x, y) ((x) < (y)) ? (x) : (y)
+#define max(x, y) ((x) > (y)) ? (x) : (y)
 
 // uS per frame
 #define FRAME_RATE 33000
@@ -77,7 +118,7 @@ fix15 boid1_vy ;
 
 
 // number of boids
-int n = 15;
+#define n 15
 //
 fix15 boid_x[n];
 fix15 boid_y[n];
@@ -87,8 +128,12 @@ fix15 boid_vy[n];
 
 //
 int id[n];
+
 //count boid
 volatile unsigned int boid_count = 0;
+
+//
+
 //=======================================
 // Boids algorithm varibale
 //=======================================
@@ -120,22 +165,23 @@ void spawnBoid(fix15* x, fix15* y, fix15* vx, fix15* vy, int direction)
 
   printf("x:%d, y:%d \n", *x, *y);
   // Choose left or right
-  // if (direction) *vx = int2fix15(3) ;
-  // else *vx = int2fix15(-3) ;
-  //vx in the range of (3-5)
-  if (direction) *vx = int2fix15(rand() % (5 - 3 + 1) +3  ) ;
-  else *vx = int2fix15(-(rand() % (5 - 3 + 1) + 3)) ;
+   if (direction) *vx = int2fix15(2) ;
+   else *vx = int2fix15(-2) ;
+  //vx in the range of (2-5)
+  //if (direction) *vx = int2fix15(rand() % (5 - 2 + 1) + 2) ;
+  //else *vx = int2fix15(-(rand() % (5 - 2 + 1) + 2)) ;
   
   // Moving down
-  //*vy = int2fix15(1) ;
-  //vy in the range of (1-10)
-  *vy = int2fix15(rand() % (10) + 1);
+  *vy = int2fix15(2);
+  //vy in the range of (2-5)
+  //*vy = int2fix15(rand() % (5 - 2 + 1) + 2);
   printf("velocity vx: %d, vy: %d \n", *vx, *vy);
+
 }
 
 // Draw the boundaries
 void drawArena() {
-  drawVLine(100, 100, 280, WHITE) ;
+  drawVLine(top, left, bottom-top, WHITE) ;
   drawVLine(540, 100, 280, WHITE) ;
   drawHLine(100, 100, 440, WHITE) ;
   drawHLine(100, 380, 440, WHITE) ;
@@ -154,15 +200,16 @@ void wallsAndEdges(fix15* x, fix15* y, fix15* vx, fix15* vy)
   int i = 0;
   int j = 0;
   for(i = 0; i<n; i++){
-    
-    fix15 xpos_avg = 0;
-    fix15 ypos_avg = 0;
-    fix15 xvel_avg = 0;
-    fix15 yvel_avg = 0;
+   
 
-    int neighboring_boids = 0;
-    fix15 close_dx = 0;
-    fix15 close_dy = 0;
+    fix15 xpos_avg = float2fix15(0);
+    fix15 ypos_avg = float2fix15(0);
+    fix15 xvel_avg = float2fix15(0);
+    fix15 yvel_avg = float2fix15(0);
+
+    fix15 neighboring_boids = float2fix15(0);
+    fix15 close_dx = float2fix15(0);
+    fix15 close_dy = float2fix15(0);
 
     for(j = 0; j<n; j++){
       if(j == i){
@@ -171,7 +218,7 @@ void wallsAndEdges(fix15* x, fix15* y, fix15* vx, fix15* vy)
       fix15 dx = boid_x[i] - boid_x[j];
       fix15 dy = boid_y[i] - boid_y[j];
       
-      if(abs(dx) < visualRange && abs(dy) < visualRange){
+      if(absfix15(dx) < visualRange && absfix15(dy) < visualRange){
         fix15 squared_distance = multfix15(dx, dx) + multfix15(dy, dy);
 
         if(squared_distance < protectedRange){
@@ -183,42 +230,42 @@ void wallsAndEdges(fix15* x, fix15* y, fix15* vx, fix15* vy)
           xvel_avg += boid_vx[j];
           yvel_avg += boid_vy[j];
 
-          neighboring_boids += 1;
+          neighboring_boids += int2fix15(1);
         } 
       }
     }
-    if(neighboring_boids > 0){
+    if(neighboring_boids > int2fix15(0)){
       //Divide accumulator variables by number of boids in visual range
-      xpos_avg = xpos_avg/neighboring_boids;
-      ypos_avg = ypos_avg/neighboring_boids;
-      xvel_avg = xvel_avg/neighboring_boids;
-      yvel_avg = yvel_avg/neighboring_boids;
+      xpos_avg = divfix(xpos_avg, neighboring_boids);
+      ypos_avg = divfix(ypos_avg, neighboring_boids);
+      xvel_avg = divfix(xvel_avg, neighboring_boids);
+      yvel_avg = divfix(yvel_avg, neighboring_boids);
 
       //Add the centering/matching contributions to velocity
       boid_vx[i] = (boid_vx[i] + 
-                  (xpos_avg - boid_x[i])*centering_factor + 
-                  (xvel_avg - boid_vx[i])*matching_factor);
+                  multfix15((xpos_avg - boid_x[i]), centering_factor) + 
+                  multfix15((xvel_avg - boid_vx[i]), matching_factor));
 
       boid_vy[i] = (boid_vy[i] + 
-                  (ypos_avg - boid_y[i])*centering_factor + 
-                  (yvel_avg - boid_vy[i])*matching_factor);
+                  multfix15((ypos_avg - boid_y[i]), centering_factor) + 
+                  multfix15((yvel_avg - boid_vy[i]), matching_factor));
     }
     // Add the avoidance contribution to velocity
-    boid_vx[i] = boid_vx[i] + (close_dx*avoidfactor);
-    boid_vy[i] = boid_vy[i] + (close_dy*avoidfactor);
+    boid_vx[i] = boid_vx[i] + multfix15(close_dx, avoidfactor);
+    boid_vy[i] = boid_vy[i] + multfix15(close_dy, avoidfactor);
         
     // If the boid is near an edge, make it turn by turnfactor
     //(this describes a box, will vary based on boundary conditions)
-    if (hitTop(*y)){
+    if (hitTop(boid_y[i])){
         boid_vy[i] = boid_vy[i] + turnfactor;
     }
-    if (hitRight(*x)){
+    if (hitRight(boid_x[i])){
         boid_vx[i] = boid_vx[i] - turnfactor;
     }
-    if (hitLeft(*x)){
+    if (hitLeft(boid_x[i])){
         boid_vx[i] = boid_vx[i] + turnfactor;
     }
-    if (hitBottom(*y)){
+    if (hitBottom(boid_y[i])){
         boid_vy[i] = boid_vy[i] - turnfactor;
     }
 
@@ -226,95 +273,63 @@ void wallsAndEdges(fix15* x, fix15* y, fix15* vx, fix15* vy)
     //### ECE 5730 students only - dynamically update bias value ###
     //##############################################################
     //# biased to right of screen
-    if(boid_vx[i] > 0){
-      biasval_0 = min(maxbias, biasval_0 + bias_increment);
-    }else{
-      biasval_0 = max(bias_increment, biasval_0 - bias_increment);
-    }
 
-    if(boid_x[j] < 0){
-      biasval_1 = min(maxbias, biasval_1 + bias_increment);
+    if(i<=n/2){
+
+      if(boid_vx[i] > int2fix15(0)){
+        biasval_0 = min(maxbias, biasval_0 + bias_increment);
+      }else{
+        biasval_0 = max(bias_increment, biasval_0 - bias_increment);
+      }
+
     }else{
-      biasval_1 = max(bias_increment, biasval_1 - bias_increment);
+
+      if(boid_vx[i] < int2fix15(0)){
+        biasval_1 = min(maxbias, biasval_1 + bias_increment);
+      }else{
+        biasval_1 = max(bias_increment, biasval_1 - bias_increment);
+      }
     }
 
     //##############################################################
     //# If the boid has a bias, bias it!
     //# biased to right of screen
 
-      boid_vx[i] = (1 - biasval_0)*boid_vx[i] + (biasval_0 * 1);
+    if(i<=n/2){
+      boid_vx[i] = multfix15((int2fix15(1) - biasval_0), boid_vx[i]) + multfix15(biasval_0, int2fix15(1));
+    }else{
     //# biased to left of screen
-      boid_vx[j] = (1 - biasval_1)*boid_vx[j] + (biasval_1 * (-1));
+      boid_vx[i] = multfix15((int2fix15(1) - biasval_1), boid_vx[i]) + multfix15(biasval_1, int2fix15(-1));
+    }
 
     //# Calculate the boid's speed
     //# Slow step! Lookup the "alpha max plus beta min" algorithm
-    fix15 speed = sqrt(multfix15(*vx, *vx) + multfix15(*vy, *vy));
+
+    // float temp1 = fix2float15(*vx);
+    // float temp2 = fix2float15(*vy);
+    // fix15 speed =  float2fix15(sqrt(temp1*temp1 + temp2 * temp2));
+
+    float temp1 = fix2float15(boid_vx[i]);
+    float temp2 = fix2float15(boid_vy[i]);
+
+    // fix15 boid_vx_2 = multfix15(boid_vx[i], boid_vx[i]);
+    // fix15 boid_vy_2 = multfix15(boid_vy[i], boid_vy[i]);
+
+    fix15 speed = float2fix15(sqrt(temp1*temp1 + temp2 * temp2));
 
     //# Enforce min and max speeds
     if(speed < minspeed){
-        *vx = (*vx/speed)*minspeed;
-        *vy = (*vy/speed)*minspeed;
+        boid_vx[i] = multfix15(divfix(boid_vx[i], speed), minspeed);
+        boid_vy[i] = multfix15(divfix(boid_vy[i], speed), minspeed);
     }
     if(speed > maxspeed){
-        *vx = (*vx/speed)*maxspeed;
-        *vy = (*vy/speed)*maxspeed;
+        boid_vx[i] = multfix15(divfix(boid_vx[i], speed), maxspeed);
+        boid_vy[i] = multfix15(divfix(boid_vx[i], speed), maxspeed);
     }
 
-    //# Update boid's position
-    *x = *x + *vx;
-    *y = *y + *vy;
-    // boid.x = boid.x + boid.vx
-    // boid.y = boid.y + boid.vy
-
-      
-      // if (boid in scout group 1): 
-      //     if (boid.vx > 0):
-      //         boid.biasval = min(maxbias, boid.biasval + bias_increment)
-      //     else:
-      //         boid.biasval = max(bias_increment, boid.biasval - bias_increment)
-      //# biased to left of screen
-      // else if (boid in scout group 2): # biased to left of screen
-      //     if (boid.vx < 0):
-      //         boid.biasval = min(maxbias, boid.biasval + bias_increment)
-      //     else:
-      //         boid.biasval = max(bias_increment, boid.biasval - bias_increment)
-      //##############################################################
-    
-    
-
-    // Reverse direction if we've hit a wall
-    if (hitTop(*y)) {
-      *vy = *vy + turnfactor ;
-    }
-    if (hitBottom(*y)) {
-      *vy = *vy - turnfactor ;
-    } 
-    if (hitRight(*x)) {
-      *vx = *vx - turnfactor;
-    }
-    if (hitLeft(*x)) {
-      *vx = *vx + turnfactor;
-    } 
-
-    float temp1 = fix2float15(*vx);
-    float temp2 = fix2float15(*vy);
-    fix15 speed =  float2fix15(sqrt(temp1*temp1 + temp2 * temp2));
-
-
-    if(speed < minspeed){
-        *vx = multfix15(divfix(*vx,speed), minspeed);
-        *vy = multfix15(divfix(*vy,speed), minspeed);
-    }
-    if(speed > maxspeed){
-        *vx = multfix15(divfix(*vx, speed), maxspeed);
-        *vy = multfix15(divfix(*vy, speed), maxspeed);
-    }
-
-    //printf("vx: %d, vy: %d \n", fix2int15(*vx),fix2int15(*vy));
-
-    //Update position using velocity
-    *x = *x + *vx ;
-    *y = *y + *vy ;
+    // //# Update boid's position
+    // boid_x[i] = boid_x[i] + boid_vx[i];
+    // boid_y[i] = boid_y[i] + boid_vy[i];
   }
 }
 
@@ -326,6 +341,7 @@ static PT_THREAD (protothread_serial(struct pt *pt))
     PT_BEGIN(pt);
     // stores user input
     static int user_input ;
+
     // wait for 0.1 sec
     PT_YIELD_usec(1000000) ;
     // announce the threader version
@@ -334,13 +350,14 @@ static PT_THREAD (protothread_serial(struct pt *pt))
     serial_write ;
       while(1) {
         // print prompt
-        sprintf(pt_serial_out_buffer, "input a number in the range 1-7 099159451985: ");
+        sprintf(pt_serial_out_buffer, "input a number in the range 1-7: ");
         // non-blocking write
         serial_write ;
         // spawn a thread to do the non-blocking serial read
         serial_read ;
         // convert input string to number
         sscanf(pt_serial_in_buffer,"%d", &user_input) ;
+
         // update boid color
         if ((user_input > 0) && (user_input < 8)) {
           color = (char)user_input ;
@@ -371,19 +388,32 @@ static PT_THREAD (protothread_anim(struct pt *pt))
     boid_count++;
 
     // Spawn a boid
-    spawnBoid(&boid0_x, &boid0_y, &boid0_vx, &boid0_vy, 0);
-
+    int i = 0;
+    for(i = 0; i<n; i++){
+      spawnBoid(&boid_x[i], &boid_y[i], &boid_vx[i], &boid_vy[i], 0);
+    }
 
     while(1) {
       // Measure time at start of thread
       begin_time = time_us_32() ;      
       // erase boid
 
-      drawRect(fix2int15(boid0_x), fix2int15(boid0_y), 2, 2, BLACK);
+      for(i = 0; i<n; i++){
+        drawRect(fix2int15(boid_x[i]), fix2int15(boid_y[i]), 2, 2, BLACK);
+      }
       // update boid's position and velocity
       wallsAndEdges(&boid0_x, &boid0_y, &boid0_vx, &boid0_vy) ;
       // draw the boid at its new position
-      drawRect(fix2int15(boid0_x), fix2int15(boid0_y), 2, 2, color); 
+
+      // //# Update boid's position
+      for(i = 0; i<n; i++){
+        boid_x[i] = boid_x[i] + boid_vx[i];
+        boid_y[i] = boid_y[i] + boid_vy[i];
+      }
+
+      for(i = 0; i<n; i++){
+        drawRect(fix2int15(boid_x[i]), fix2int15(boid_y[i]), 2, 2, color);
+      } 
       // draw the boundaries
       drawArena() ;
       // delay in accordance with frame rate
@@ -401,10 +431,10 @@ static PT_THREAD (protothread_anim(struct pt *pt))
       sprintf(timetext, "%d", (int)duration_time);
       writeString(timetext);
 
-      //print to the terminal
-      printf("Time: %f\n",(float)duration_time/1000000.0);
-      printf("Boid numbers: %d\n", boid_count);
-      printf("FRAME_RATE: %d\n", FRAME_RATE);
+      // //print to the terminal
+      // printf("Time: %f\n",(float)duration_time/1000000.0);
+      // printf("Boid numbers: %d\n", boid_count);
+      // printf("FRAME_RATE: %d\n", FRAME_RATE);
     } // END WHILE(1)
   PT_END(pt);
 } // animation thread
@@ -472,7 +502,7 @@ int main(){
   //multicore_launch_core1(&core1_main);
 
   // add threads
-  //pt_add_thread(protothread_serial);
+  pt_add_thread(protothread_serial);
   pt_add_thread(protothread_anim);
 
   // start scheduler
