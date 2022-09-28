@@ -60,6 +60,10 @@ volatile int bottom = 380;
 volatile int left = 100;
 volatile int right = 540;
 
+bool flag_1 = false; 
+bool flag_2 = false; 
+bool flag_3 = false; 
+
 
 // hit function
 bool hitBottom(fix15 b){
@@ -305,6 +309,8 @@ void wallsAndEdges(fix15* x, fix15* y, fix15* vx, fix15* vy)
         boid_vy[i] = boid_vy[i] - turnfactor;
     }
 
+    //if()
+
     if (hitTopBoundary(boid_y[i])){
       boid_y[i] = int2fix15(479);
         //boid_vy[i] = boid_vy[i] + turnfactor;
@@ -405,43 +411,57 @@ static PT_THREAD (protothread_serial(struct pt *pt))
         
         // change Top value
         // print prompt
-        sprintf(pt_serial_out_buffer, "input the area [Top]\n");
-        // non-blocking write
-        serial_write ;
-        // spawn a thread to do the non-blocking serial read
-        serial_read ;
-        // convert input string to number
-        sscanf(pt_serial_in_buffer,"%d", &user_input);
-        top = user_input;
 
-        sprintf(pt_serial_out_buffer, "input the area [Right]\n");
-        // non-blocking write
-        serial_write ;
-        // spawn a thread to do the non-blocking serial read
-        serial_read ;
-        // convert input string to number
-        sscanf(pt_serial_in_buffer,"%d", &user_input);
-        right = user_input;
+        //Mode 1 for box
+        //Mode 2 for box with traverse
+        sprintf(pt_serial_out_buffer, "Mode, 1 for box\n 2 for box with top/bottom wrapping\n 3 for box with top/bottom left/right wrapping");
 
-        // change Bottom value
-        sprintf(pt_serial_out_buffer, "input the area [Bottom]\n");
+        sprintf(pt_serial_out_buffer, "input the area [flag Top Bottom Left Right]\n");
         // non-blocking write
         serial_write ;
         // spawn a thread to do the non-blocking serial read
         serial_read ;
         // convert input string to number
-        sscanf(pt_serial_in_buffer,"%d", &user_input);
-        bottom = user_input;
+        sscanf(pt_serial_in_buffer,"%d %d %d %d", &top, &bottom, &left, &right);
 
-        // change Left value
-        sprintf(pt_serial_out_buffer, "input the area [Left]\n");
+
+        sprintf(pt_serial_out_buffer, "Constraint Line\n");
         // non-blocking write
         serial_write ;
         // spawn a thread to do the non-blocking serial read
         serial_read ;
         // convert input string to number
-        sscanf(pt_serial_in_buffer,"%d", &user_input);
-        left = user_input;
+        sscanf(pt_serial_in_buffer,"%d %d %d %d", &top, &bottom, &left, &right);
+
+
+        // sprintf(pt_serial_out_buffer, "input the area [Right]\n");
+        // // non-blocking write
+        // serial_write ;
+        // // spawn a thread to do the non-blocking serial read
+        // serial_read ;
+        // // convert input string to number
+        // sscanf(pt_serial_in_buffer,"%d", &user_input);
+        // right = user_input;
+
+        // // change Bottom value
+        // sprintf(pt_serial_out_buffer, "input the area [Bottom]\n");
+        // // non-blocking write
+        // serial_write ;
+        // // spawn a thread to do the non-blocking serial read
+        // serial_read ;
+        // // convert input string to number
+        // sscanf(pt_serial_in_buffer,"%d", &user_input);
+        // bottom = user_input;
+
+        // // change Left value
+        // sprintf(pt_serial_out_buffer, "input the area [Left]\n");
+        // // non-blocking write
+        // serial_write ;
+        // // spawn a thread to do the non-blocking serial read
+        // serial_read ;
+        // // convert input string to number
+        // sscanf(pt_serial_in_buffer,"%d", &user_input);
+        // left = user_input;
         //printf("This is top value: %d", top);
 
         fillRect(0, 0, 640, 480, BLACK);
