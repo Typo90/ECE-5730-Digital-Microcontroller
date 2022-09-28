@@ -55,13 +55,14 @@ typedef signed int fix15 ;
 // #define hitTop(b) (b<int2fix15(100))
 // #define hitLeft(a) (a<int2fix15(100))
 // #define hitRight(a) (a>int2fix15(540))
+volatile int top = 100;
+volatile int bottom = 380;
+volatile int left = 100;
+volatile int right = 540;
 
-int top = 100;
-int bottom = 380;
-int left = 100;
-int right = 540;
 
-bool hitBottom(fix15* b){
+// hit function
+bool hitBottom(fix15 b){
   if(b > int2fix15(bottom)){
     return true;
   }else{
@@ -69,24 +70,57 @@ bool hitBottom(fix15* b){
   }
 }
 
-bool hitTop(fix15* b){
-  if(b > int2fix15(top)){
+bool hitTop(fix15 b){
+  if(b < int2fix15(top)){
     return true;
   }else{
     return false;
   }
 }
 
-bool hitLeft(fix15* b){
-  if(b > int2fix15(left)){
+bool hitLeft(fix15 b){
+  if(b < int2fix15(left)){
     return true;
   }else{
     return false;
   }
 }
 
-bool hitRight(fix15* b){
+bool hitRight(fix15 b){
   if(b > int2fix15(right)){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+//hit boundry function
+bool hitBottomBoundary(fix15 b){
+  if(b > int2fix15(480)){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+bool hitTopBoundary(fix15 b){
+  if(b < int2fix15(0)){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+bool hitLeftBoundary(fix15 b){
+  if(b < int2fix15(0)){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+bool hitRightBoundary(fix15 b){
+  if(b > int2fix15(640)){
     return true;
   }else{
     return false;
@@ -163,7 +197,7 @@ void spawnBoid(fix15* x, fix15* y, fix15* vx, fix15* vy, int direction)
   //*y = int2fix15(240) ;
   *y = int2fix15(rand() % (370 - 110 + 1) + 110);
 
-  printf("x:%d, y:%d \n", *x, *y);
+  // printf("x:%d, y:%d \n", *x, *y);
   // Choose left or right
    if (direction) *vx = int2fix15(2) ;
    else *vx = int2fix15(-2) ;
@@ -175,17 +209,19 @@ void spawnBoid(fix15* x, fix15* y, fix15* vx, fix15* vy, int direction)
   *vy = int2fix15(2);
   //vy in the range of (2-5)
   //*vy = int2fix15(rand() % (5 - 2 + 1) + 2);
-  printf("velocity vx: %d, vy: %d \n", *vx, *vy);
+  // printf("velocity vx: %d, vy: %d \n", *vx, *vy);
 
 }
 
 // Draw the boundaries
 void drawArena() {
-  drawVLine(top, left, bottom-top, WHITE) ;
-  drawVLine(540, 100, 280, WHITE) ;
-  drawHLine(100, 100, 440, WHITE) ;
-  drawHLine(100, 380, 440, WHITE) ;
+  //printf("%d", top);
+  drawVLine(top, top, bottom-top, WHITE) ;
+  drawVLine(right, top, bottom-top, WHITE) ;
+  drawHLine(left, bottom, right-left, WHITE) ;
+  drawHLine(left, top, right-left, WHITE) ;
 }
+
 
 // Detect wallstrikes, update velocity and position
 void wallsAndEdges(fix15* x, fix15* y, fix15* vx, fix15* vy)
@@ -269,6 +305,24 @@ void wallsAndEdges(fix15* x, fix15* y, fix15* vx, fix15* vy)
         boid_vy[i] = boid_vy[i] - turnfactor;
     }
 
+    if (hitTopBoundary(boid_y[i])){
+      boid_y[i] = int2fix15(479);
+        //boid_vy[i] = boid_vy[i] + turnfactor;
+    }
+    if (hitRightBoundary(boid_x[i])){
+      boid_x[i] = int2fix15(1);
+        //boid_vx[i] = boid_vx[i] - turnfactor;
+    }
+    if (hitLeftBoundary(boid_x[i])){
+      boid_x[i] = int2fix15(479);
+        //boid_vx[i] = boid_vx[i] + turnfactor;
+    }
+    if (hitBottomBoundary(boid_y[i])){
+      boid_y[i] = int2fix15(1);
+        //boid_vy[i] = boid_vy[i] - turnfactor;
+    }
+
+
     //##############################################################
     //### ECE 5730 students only - dynamically update bias value ###
     //##############################################################
@@ -341,7 +395,6 @@ static PT_THREAD (protothread_serial(struct pt *pt))
     PT_BEGIN(pt);
     // stores user input
     static int user_input ;
-
     // wait for 0.1 sec
     PT_YIELD_usec(1000000) ;
     // announce the threader version
@@ -349,19 +402,63 @@ static PT_THREAD (protothread_serial(struct pt *pt))
     // non-blocking write
     serial_write ;
       while(1) {
+        
+        // change Top value
         // print prompt
-        sprintf(pt_serial_out_buffer, "input a number in the range 1-7: ");
+        sprintf(pt_serial_out_buffer, "input the area [Top]\n");
         // non-blocking write
         serial_write ;
         // spawn a thread to do the non-blocking serial read
         serial_read ;
         // convert input string to number
-        sscanf(pt_serial_in_buffer,"%d", &user_input) ;
+        sscanf(pt_serial_in_buffer,"%d", &user_input);
+        top = user_input;
 
-        // update boid color
-        if ((user_input > 0) && (user_input < 8)) {
-          color = (char)user_input ;
-        }
+        sprintf(pt_serial_out_buffer, "input the area [Right]\n");
+        // non-blocking write
+        serial_write ;
+        // spawn a thread to do the non-blocking serial read
+        serial_read ;
+        // convert input string to number
+        sscanf(pt_serial_in_buffer,"%d", &user_input);
+        right = user_input;
+
+        // change Bottom value
+        sprintf(pt_serial_out_buffer, "input the area [Bottom]\n");
+        // non-blocking write
+        serial_write ;
+        // spawn a thread to do the non-blocking serial read
+        serial_read ;
+        // convert input string to number
+        sscanf(pt_serial_in_buffer,"%d", &user_input);
+        bottom = user_input;
+
+        // change Left value
+        sprintf(pt_serial_out_buffer, "input the area [Left]\n");
+        // non-blocking write
+        serial_write ;
+        // spawn a thread to do the non-blocking serial read
+        serial_read ;
+        // convert input string to number
+        sscanf(pt_serial_in_buffer,"%d", &user_input);
+        left = user_input;
+        //printf("This is top value: %d", top);
+
+        fillRect(0, 0, 640, 480, BLACK);
+        // print prompt
+        // sprintf(pt_serial_out_buffer, "input a number in the range 1-7: ");
+        // // non-blocking write
+        // serial_write ;
+        // // spawn a thread to do the non-blocking serial read
+        // serial_read ;
+        // // convert input string to number
+        // sscanf(pt_serial_in_buffer,"%d", &user_input) ;
+
+        // // update boid color
+        // if ((user_input > 0) && (user_input < 8)) {
+        //   color = (char)user_input ;
+        // }
+
       } // END WHILE(1)
   PT_END(pt);
 } // timer thread
