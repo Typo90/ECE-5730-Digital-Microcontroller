@@ -60,9 +60,11 @@ volatile int bottom = 380;
 volatile int left = 100;
 volatile int right = 540;
 
-bool flag_1 = false; 
-bool flag_2 = false; 
-bool flag_3 = false; 
+int flag_1 = 0; 
+int flag_2 = 0; 
+int flag_3 = 0; 
+
+int flag = 0;
 
 
 // hit function
@@ -100,7 +102,7 @@ bool hitRight(fix15 b){
 
 //hit boundry function
 bool hitBottomBoundary(fix15 b){
-  if(b > int2fix15(480)){
+  if(b > int2fix15(bottom)){
     return true;
   }else{
     return false;
@@ -108,7 +110,7 @@ bool hitBottomBoundary(fix15 b){
 }
 
 bool hitTopBoundary(fix15 b){
-  if(b < int2fix15(0)){
+  if(b < int2fix15(top)){
     return true;
   }else{
     return false;
@@ -116,7 +118,7 @@ bool hitTopBoundary(fix15 b){
 }
 
 bool hitLeftBoundary(fix15 b){
-  if(b < int2fix15(0)){
+  if(b < int2fix15(left)){
     return true;
   }else{
     return false;
@@ -124,7 +126,7 @@ bool hitLeftBoundary(fix15 b){
 }
 
 bool hitRightBoundary(fix15 b){
-  if(b > int2fix15(640)){
+  if(b > int2fix15(right)){
     return true;
   }else{
     return false;
@@ -156,7 +158,7 @@ fix15 boid1_vy ;
 
 
 // number of boids
-#define n 15
+#define n 60
 //
 fix15 boid_x[n];
 fix15 boid_y[n];
@@ -220,7 +222,7 @@ void spawnBoid(fix15* x, fix15* y, fix15* vx, fix15* vy, int direction)
 // Draw the boundaries
 void drawArena() {
   //printf("%d", top);
-  drawVLine(top, top, bottom-top, WHITE) ;
+  drawVLine(left, top, bottom-top, WHITE) ;
   drawVLine(right, top, bottom-top, WHITE) ;
   drawHLine(left, bottom, right-left, WHITE) ;
   drawHLine(left, top, right-left, WHITE) ;
@@ -309,23 +311,28 @@ void wallsAndEdges(fix15* x, fix15* y, fix15* vx, fix15* vy)
         boid_vy[i] = boid_vy[i] - turnfactor;
     }
 
-    //if()
+    if(flag_2 == 1){
 
-    if (hitTopBoundary(boid_y[i])){
-      boid_y[i] = int2fix15(479);
-        //boid_vy[i] = boid_vy[i] + turnfactor;
-    }
-    if (hitRightBoundary(boid_x[i])){
-      boid_x[i] = int2fix15(1);
-        //boid_vx[i] = boid_vx[i] - turnfactor;
-    }
-    if (hitLeftBoundary(boid_x[i])){
-      boid_x[i] = int2fix15(479);
-        //boid_vx[i] = boid_vx[i] + turnfactor;
-    }
-    if (hitBottomBoundary(boid_y[i])){
-      boid_y[i] = int2fix15(1);
-        //boid_vy[i] = boid_vy[i] - turnfactor;
+      if (hitTopBoundary(boid_y[i])){
+        boid_y[i] = int2fix15(bottom-1);
+          //boid_vy[i] = boid_vy[i] + turnfactor;
+      }
+      if (hitBottomBoundary(boid_y[i])){
+        boid_y[i] = int2fix15(top+1);
+          //boid_vy[i] = boid_vy[i] - turnfactor;
+      }
+
+      if(flag_3 == 1){
+        if (hitRightBoundary(boid_x[i])){
+          boid_x[i] = int2fix15(left+1);
+            //boid_vx[i] = boid_vx[i] - turnfactor;
+        }
+        if (hitLeftBoundary(boid_x[i])){
+          boid_x[i] = int2fix15(right-1);
+            //boid_vx[i] = boid_vx[i] + turnfactor;
+        }
+      }
+
     }
 
 
@@ -414,7 +421,8 @@ static PT_THREAD (protothread_serial(struct pt *pt))
 
         //Mode 1 for box
         //Mode 2 for box with traverse
-        sprintf(pt_serial_out_buffer, "Mode, 1 for box\n 2 for box with top/bottom wrapping\n 3 for box with top/bottom left/right wrapping");
+        //sprintf(pt_serial_out_buffer, "Mode, 1 for box\n 2 for box with top/bottom wrapping\n 3 for box with top/bottom left/right wrapping\n");
+        //serial_write ;
 
         sprintf(pt_serial_out_buffer, "input the area [flag Top Bottom Left Right]\n");
         // non-blocking write
@@ -422,62 +430,28 @@ static PT_THREAD (protothread_serial(struct pt *pt))
         // spawn a thread to do the non-blocking serial read
         serial_read ;
         // convert input string to number
-        sscanf(pt_serial_in_buffer,"%d %d %d %d", &top, &bottom, &left, &right);
+        sscanf(pt_serial_in_buffer,"%d %d %d %d %d", &flag, &top, &bottom, &left, &right);
 
+        if(flag == 1){
+          flag_1 = 1;
+          flag_2 = 0;
+          flag_3 = 0;
+        }else if(flag == 2){
+          flag_1 = 0;
+          flag_2 = 1;
+          flag_3 = 0;
+        }else if(flag == 3){
+          flag_1 = 0;
+          flag_2 = 1;
+          flag_3 = 1;
+        }
 
-        sprintf(pt_serial_out_buffer, "Constraint Line\n");
-        // non-blocking write
+        sprintf(pt_serial_out_buffer, "flag: %d, Top: %d, Bottom:% d Left:%d right: %d\n", top, bottom, left, right);
         serial_write ;
-        // spawn a thread to do the non-blocking serial read
-        serial_read ;
-        // convert input string to number
-        sscanf(pt_serial_in_buffer,"%d %d %d %d", &top, &bottom, &left, &right);
-
-
-        // sprintf(pt_serial_out_buffer, "input the area [Right]\n");
-        // // non-blocking write
-        // serial_write ;
-        // // spawn a thread to do the non-blocking serial read
-        // serial_read ;
-        // // convert input string to number
-        // sscanf(pt_serial_in_buffer,"%d", &user_input);
-        // right = user_input;
-
-        // // change Bottom value
-        // sprintf(pt_serial_out_buffer, "input the area [Bottom]\n");
-        // // non-blocking write
-        // serial_write ;
-        // // spawn a thread to do the non-blocking serial read
-        // serial_read ;
-        // // convert input string to number
-        // sscanf(pt_serial_in_buffer,"%d", &user_input);
-        // bottom = user_input;
-
-        // // change Left value
-        // sprintf(pt_serial_out_buffer, "input the area [Left]\n");
-        // // non-blocking write
-        // serial_write ;
-        // // spawn a thread to do the non-blocking serial read
-        // serial_read ;
-        // // convert input string to number
-        // sscanf(pt_serial_in_buffer,"%d", &user_input);
-        // left = user_input;
-        //printf("This is top value: %d", top);
+        
 
         fillRect(0, 0, 640, 480, BLACK);
-        // print prompt
-        // sprintf(pt_serial_out_buffer, "input a number in the range 1-7: ");
-        // // non-blocking write
-        // serial_write ;
-        // // spawn a thread to do the non-blocking serial read
-        // serial_read ;
-        // // convert input string to number
-        // sscanf(pt_serial_in_buffer,"%d", &user_input) ;
 
-        // // update boid color
-        // if ((user_input > 0) && (user_input < 8)) {
-        //   color = (char)user_input ;
-        // }
 
       } // END WHILE(1)
   PT_END(pt);
