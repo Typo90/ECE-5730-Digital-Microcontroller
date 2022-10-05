@@ -66,6 +66,12 @@ int flag_3 = 0;
 
 int flag = 0;
 
+// number of boids
+#define n 300
+//#define n1 100
+//#define n2 n-n1
+//volatile int n = 300;
+volatile int n1 = 100;
 
 // hit function
 bool hitBottom(fix15 b){
@@ -143,7 +149,6 @@ bool hitRightBoundary(fix15 b){
 // the color of the boid
 char color = WHITE ;
 
-
 // Boid on core 0
 fix15 boid0_x ;
 fix15 boid0_y ;
@@ -157,8 +162,7 @@ fix15 boid1_vx ;
 fix15 boid1_vy ;
 
 
-// number of boids
-#define n 60
+
 //
 fix15 boid_x[n];
 fix15 boid_y[n];
@@ -179,7 +183,7 @@ volatile unsigned int boid_count = 0;
 //=======================================
 fix15 turnfactor = float2fix15(0.2);
 fix15 visualRange = int2fix15(40);
-fix15 protectedRange = int2fix15(8);
+fix15 protectedRange = int2fix15(15);
 fix15 centering_factor = float2fix15(0.0005);
 fix15 avoidfactor = float2fix15(0.05);
 fix15 matching_factor = float2fix15(0.05);
@@ -230,18 +234,15 @@ void drawArena() {
 
 
 // Detect wallstrikes, update velocity and position
-void wallsAndEdges(fix15* x, fix15* y, fix15* vx, fix15* vy)
+void wallsAndEdges_0(fix15* x, fix15* y, fix15* vx, fix15* vy)
 {
-
-    
-
   // //=======================================
   // // Boids algorithm 
   // //=======================================
 
   int i = 0;
   int j = 0;
-  for(i = 0; i<n; i++){
+  for(i = 0; i<n1; i++){
    
 
     fix15 xpos_avg = float2fix15(0);
@@ -253,7 +254,7 @@ void wallsAndEdges(fix15* x, fix15* y, fix15* vx, fix15* vy)
     fix15 close_dx = float2fix15(0);
     fix15 close_dy = float2fix15(0);
 
-    for(j = 0; j<n; j++){
+    for(j = 0; j<n1; j++){
       if(j == i){
         continue;
       }
@@ -311,29 +312,29 @@ void wallsAndEdges(fix15* x, fix15* y, fix15* vx, fix15* vy)
         boid_vy[i] = boid_vy[i] - turnfactor;
     }
 
-    if(flag_2 == 1){
+    // if(flag_2 == 1){
 
-      if (hitTopBoundary(boid_y[i])){
-        boid_y[i] = int2fix15(bottom-1);
-          //boid_vy[i] = boid_vy[i] + turnfactor;
-      }
-      if (hitBottomBoundary(boid_y[i])){
-        boid_y[i] = int2fix15(top+1);
-          //boid_vy[i] = boid_vy[i] - turnfactor;
-      }
+    //   if (hitTopBoundary(boid_y[i])){
+    //     boid_y[i] = int2fix15(bottom-1);
+    //       //boid_vy[i] = boid_vy[i] + turnfactor;
+    //   }
+    //   if (hitBottomBoundary(boid_y[i])){
+    //     boid_y[i] = int2fix15(top+1);
+    //       //boid_vy[i] = boid_vy[i] - turnfactor;
+    //   }
 
-      if(flag_3 == 1){
-        if (hitRightBoundary(boid_x[i])){
-          boid_x[i] = int2fix15(left+1);
-            //boid_vx[i] = boid_vx[i] - turnfactor;
-        }
-        if (hitLeftBoundary(boid_x[i])){
-          boid_x[i] = int2fix15(right-1);
-            //boid_vx[i] = boid_vx[i] + turnfactor;
-        }
-      }
+    //   if(flag_3 == 1){
+    //     if (hitRightBoundary(boid_x[i])){
+    //       boid_x[i] = int2fix15(left+1);
+    //         //boid_vx[i] = boid_vx[i] - turnfactor;
+    //     }
+    //     if (hitLeftBoundary(boid_x[i])){
+    //       boid_x[i] = int2fix15(right-1);
+    //         //boid_vx[i] = boid_vx[i] + turnfactor;
+    //     }
+    //   }
 
-    }
+    // }
 
 
     //##############################################################
@@ -341,33 +342,201 @@ void wallsAndEdges(fix15* x, fix15* y, fix15* vx, fix15* vy)
     //##############################################################
     //# biased to right of screen
 
-    if(i<=n/2){
+    //if(i<=n/2){
 
-      if(boid_vx[i] > int2fix15(0)){
-        biasval_0 = min(maxbias, biasval_0 + bias_increment);
-      }else{
-        biasval_0 = max(bias_increment, biasval_0 - bias_increment);
-      }
-
+    if(boid_vx[i] > int2fix15(0)){
+      biasval_0 = min(maxbias, biasval_0 + bias_increment);
     }else{
-
-      if(boid_vx[i] < int2fix15(0)){
-        biasval_1 = min(maxbias, biasval_1 + bias_increment);
-      }else{
-        biasval_1 = max(bias_increment, biasval_1 - bias_increment);
-      }
+      biasval_0 = max(bias_increment, biasval_0 - bias_increment);
     }
+
+    // }else{
+
+    //   if(boid_vx[i] < int2fix15(0)){
+    //     biasval_1 = min(maxbias, biasval_1 + bias_increment);
+    //   }else{
+    //     biasval_1 = max(bias_increment, biasval_1 - bias_increment);
+    //   }
+    // }
 
     //##############################################################
     //# If the boid has a bias, bias it!
     //# biased to right of screen
 
-    if(i<=n/2){
-      boid_vx[i] = multfix15((int2fix15(1) - biasval_0), boid_vx[i]) + multfix15(biasval_0, int2fix15(1));
-    }else{
-    //# biased to left of screen
-      boid_vx[i] = multfix15((int2fix15(1) - biasval_1), boid_vx[i]) + multfix15(biasval_1, int2fix15(-1));
+    //if(i<=n/2){
+    boid_vx[i] = multfix15((int2fix15(1) - biasval_0), boid_vx[i]) + multfix15(biasval_0, int2fix15(1));
+    // }else{
+    // //# biased to left of screen
+    //   boid_vx[i] = multfix15((int2fix15(1) - biasval_1), boid_vx[i]) + multfix15(biasval_1, int2fix15(-1));
+    // }
+
+    //# Calculate the boid's speed
+    //# Slow step! Lookup the "alpha max plus beta min" algorithm
+
+    // float temp1 = fix2float15(*vx);
+    // float temp2 = fix2float15(*vy);
+    // fix15 speed =  float2fix15(sqrt(temp1*temp1 + temp2 * temp2));
+
+    float temp1 = fix2float15(boid_vx[i]);
+    float temp2 = fix2float15(boid_vy[i]);
+
+    // fix15 boid_vx_2 = multfix15(boid_vx[i], boid_vx[i]);
+    // fix15 boid_vy_2 = multfix15(boid_vy[i], boid_vy[i]);
+
+    fix15 speed = float2fix15(sqrt(temp1*temp1 + temp2 * temp2));
+
+    //# Enforce min and max speeds
+    if(speed < minspeed){
+        boid_vx[i] = multfix15(divfix(boid_vx[i], speed), minspeed);
+        boid_vy[i] = multfix15(divfix(boid_vy[i], speed), minspeed);
     }
+    if(speed > maxspeed){
+        boid_vx[i] = multfix15(divfix(boid_vx[i], speed), maxspeed);
+        boid_vy[i] = multfix15(divfix(boid_vx[i], speed), maxspeed);
+    }
+
+    // //# Update boid's position
+    // boid_x[i] = boid_x[i] + boid_vx[i];
+    // boid_y[i] = boid_y[i] + boid_vy[i];
+  }
+}
+
+// Detect wallstrikes, update velocity and position
+void wallsAndEdges_1(fix15* x, fix15* y, fix15* vx, fix15* vy)
+{
+  // //=======================================
+  // // Boids algorithm 
+  // //=======================================
+
+  int i = 0;
+  int j = 0;
+  for(i = n1; i<n; i++){
+   
+
+    fix15 xpos_avg = float2fix15(0);
+    fix15 ypos_avg = float2fix15(0);
+    fix15 xvel_avg = float2fix15(0);
+    fix15 yvel_avg = float2fix15(0);
+
+    fix15 neighboring_boids = float2fix15(0);
+    fix15 close_dx = float2fix15(0);
+    fix15 close_dy = float2fix15(0);
+
+    for(j = n1; j<n; j++){
+      if(j == i){
+        continue;
+      }
+      fix15 dx = boid_x[i] - boid_x[j];
+      fix15 dy = boid_y[i] - boid_y[j];
+      
+      if(absfix15(dx) < visualRange && absfix15(dy) < visualRange){
+        fix15 squared_distance = multfix15(dx, dx) + multfix15(dy, dy);
+
+        if(squared_distance < protectedRange){
+          close_dx += boid_x[i] - boid_x[j];
+          close_dy += boid_y[i] - boid_y[j];
+        }else if(squared_distance < visualRange){
+          xpos_avg += boid_x[j];
+          ypos_avg += boid_y[j];
+          xvel_avg += boid_vx[j];
+          yvel_avg += boid_vy[j];
+
+          neighboring_boids += int2fix15(1);
+        } 
+      }
+    }
+    if(neighboring_boids > int2fix15(0)){
+      //Divide accumulator variables by number of boids in visual range
+      xpos_avg = divfix(xpos_avg, neighboring_boids);
+      ypos_avg = divfix(ypos_avg, neighboring_boids);
+      xvel_avg = divfix(xvel_avg, neighboring_boids);
+      yvel_avg = divfix(yvel_avg, neighboring_boids);
+
+      //Add the centering/matching contributions to velocity
+      boid_vx[i] = (boid_vx[i] + 
+                  multfix15((xpos_avg - boid_x[i]), centering_factor) + 
+                  multfix15((xvel_avg - boid_vx[i]), matching_factor));
+
+      boid_vy[i] = (boid_vy[i] + 
+                  multfix15((ypos_avg - boid_y[i]), centering_factor) + 
+                  multfix15((yvel_avg - boid_vy[i]), matching_factor));
+    }
+    // Add the avoidance contribution to velocity
+    boid_vx[i] = boid_vx[i] + multfix15(close_dx, avoidfactor);
+    boid_vy[i] = boid_vy[i] + multfix15(close_dy, avoidfactor);
+        
+    // If the boid is near an edge, make it turn by turnfactor
+    //(this describes a box, will vary based on boundary conditions)
+    if (hitTop(boid_y[i])){
+        boid_vy[i] = boid_vy[i] + turnfactor;
+    }
+    if (hitRight(boid_x[i])){
+        boid_vx[i] = boid_vx[i] - turnfactor;
+    }
+    if (hitLeft(boid_x[i])){
+        boid_vx[i] = boid_vx[i] + turnfactor;
+    }
+    if (hitBottom(boid_y[i])){
+        boid_vy[i] = boid_vy[i] - turnfactor;
+    }
+
+    // if(flag_2 == 1){
+
+    //   if (hitTopBoundary(boid_y[i])){
+    //     boid_y[i] = int2fix15(bottom-1);
+    //       //boid_vy[i] = boid_vy[i] + turnfactor;
+    //   }
+    //   if (hitBottomBoundary(boid_y[i])){
+    //     boid_y[i] = int2fix15(top+1);
+    //       //boid_vy[i] = boid_vy[i] - turnfactor;
+    //   }
+
+    //   if(flag_3 == 1){
+    //     if (hitRightBoundary(boid_x[i])){
+    //       boid_x[i] = int2fix15(left+1);
+    //         //boid_vx[i] = boid_vx[i] - turnfactor;
+    //     }
+    //     if (hitLeftBoundary(boid_x[i])){
+    //       boid_x[i] = int2fix15(right-1);
+    //         //boid_vx[i] = boid_vx[i] + turnfactor;
+    //     }
+    //   }
+
+    // }
+
+
+    //##############################################################
+    //### ECE 5730 students only - dynamically update bias value ###
+    //##############################################################
+    //# biased to right of screen
+
+    // if(i<=n/2){
+
+    //   if(boid_vx[i] > int2fix15(0)){
+    //     biasval_0 = min(maxbias, biasval_0 + bias_increment);
+    //   }else{
+    //     biasval_0 = max(bias_increment, biasval_0 - bias_increment);
+    //   }
+
+    // }else{
+
+    if(boid_vx[i] < int2fix15(0)){
+      biasval_1 = min(maxbias, biasval_1 + bias_increment);
+    }else{
+      biasval_1 = max(bias_increment, biasval_1 - bias_increment);
+    }
+    //}
+
+    //##############################################################
+    //# If the boid has a bias, bias it!
+    //# biased to right of screen
+
+    // if(i<=n/2){
+    //   boid_vx[i] = multfix15((int2fix15(1) - biasval_0), boid_vx[i]) + multfix15(biasval_0, int2fix15(1));
+    // }else{
+    //# biased to left of screen
+    boid_vx[i] = multfix15((int2fix15(1) - biasval_1), boid_vx[i]) + multfix15(biasval_1, int2fix15(-1));
+    //}
 
     //# Calculate the boid's speed
     //# Slow step! Lookup the "alpha max plus beta min" algorithm
@@ -408,6 +577,8 @@ static PT_THREAD (protothread_serial(struct pt *pt))
     PT_BEGIN(pt);
     // stores user input
     static int user_input ;
+    static float biaval_float_0;
+    static float biaval_float_1;
     // wait for 0.1 sec
     PT_YIELD_usec(1000000) ;
     // announce the threader version
@@ -424,14 +595,16 @@ static PT_THREAD (protothread_serial(struct pt *pt))
         //sprintf(pt_serial_out_buffer, "Mode, 1 for box\n 2 for box with top/bottom wrapping\n 3 for box with top/bottom left/right wrapping\n");
         //serial_write ;
 
-        sprintf(pt_serial_out_buffer, "input the area [flag Top Bottom Left Right]\n");
+        sprintf(pt_serial_out_buffer, "input the area [flag Top Bottom Left Right biasval0 biasval1]\n");
         // non-blocking write
         serial_write ;
         // spawn a thread to do the non-blocking serial read
         serial_read ;
         // convert input string to number
-        sscanf(pt_serial_in_buffer,"%d %d %d %d %d", &flag, &top, &bottom, &left, &right);
-
+        sscanf(pt_serial_in_buffer,"%d %d %d %d %d %f %f %d", &flag, &top, &bottom, &left, &right, &biaval_float_0, &biaval_float_1, &n1);
+        biasval_0 = float2fix15(biaval_float_0);
+        biasval_1 = float2fix15(biaval_float_1);
+        //sprintf(%f)
         if(flag == 1){
           flag_1 = 1;
           flag_2 = 0;
@@ -446,7 +619,8 @@ static PT_THREAD (protothread_serial(struct pt *pt))
           flag_3 = 1;
         }
 
-        sprintf(pt_serial_out_buffer, "flag: %d, Top: %d, Bottom:% d Left:%d right: %d\n", top, bottom, left, right);
+        sprintf(pt_serial_out_buffer, "biasval 0: %f biasval 1: %f \n", biaval_float_0, biaval_float_1);
+        //sprintf(pt_serial_out_buffer, "flag: %d, Top: %d, Bottom:% d Left:%d right: %d\n", top, bottom, left, right);
         serial_write ;
         
 
@@ -480,7 +654,7 @@ static PT_THREAD (protothread_anim(struct pt *pt))
 
     // Spawn a boid
     int i = 0;
-    for(i = 0; i<n; i++){
+    for(i = 0; i<n1; i++){
       spawnBoid(&boid_x[i], &boid_y[i], &boid_vx[i], &boid_vy[i], 0);
     }
 
@@ -489,22 +663,49 @@ static PT_THREAD (protothread_anim(struct pt *pt))
       begin_time = time_us_32() ;      
       // erase boid
 
-      for(i = 0; i<n; i++){
+      for(i = 0; i<n1; i++){
         drawRect(fix2int15(boid_x[i]), fix2int15(boid_y[i]), 2, 2, BLACK);
       }
       // update boid's position and velocity
-      wallsAndEdges(&boid0_x, &boid0_y, &boid0_vx, &boid0_vy) ;
+      wallsAndEdges_0(&boid0_x, &boid0_y, &boid0_vx, &boid0_vy) ;
       // draw the boid at its new position
 
+
       // //# Update boid's position
-      for(i = 0; i<n; i++){
+      for(i = 0; i<n1; i++){
+
         boid_x[i] = boid_x[i] + boid_vx[i];
         boid_y[i] = boid_y[i] + boid_vy[i];
+
+        if(flag_2 == 1){
+
+          if (hitTopBoundary(boid_y[i])){
+            boid_y[i] = int2fix15(bottom-1);
+              //boid_vy[i] = boid_vy[i] + turnfactor;
+          }
+          if (hitBottomBoundary(boid_y[i])){
+            boid_y[i] = int2fix15(top+1);
+              //boid_vy[i] = boid_vy[i] - turnfactor;
+          }
+
+          if(flag_3 == 1){
+            if (hitRightBoundary(boid_x[i])){
+              boid_x[i] = int2fix15(left+1);
+                //boid_vx[i] = boid_vx[i] - turnfactor;
+            }
+            if (hitLeftBoundary(boid_x[i])){
+              boid_x[i] = int2fix15(right-1);
+                //boid_vx[i] = boid_vx[i] + turnfactor;
+            }
+          }
+        }
+
+        drawRect(fix2int15(boid_x[i]), fix2int15(boid_y[i]), 2, 2, color);
       }
 
-      for(i = 0; i<n; i++){
-        drawRect(fix2int15(boid_x[i]), fix2int15(boid_y[i]), 2, 2, color);
-      } 
+      // for(i = 0; i<n; i++){
+      //   drawRect(fix2int15(boid_x[i]), fix2int15(boid_y[i]), 2, 2, color);
+      // } 
       // draw the boundaries
       drawArena() ;
       // delay in accordance with frame rate
@@ -514,13 +715,13 @@ static PT_THREAD (protothread_anim(struct pt *pt))
      // NEVER exit while
 
       //VGA output
-      duration_time = time_us_32()-start_time;
-      setTextColor(WHITE) ;
-      setCursor(65, 0) ;
-      setTextSize(2) ;
-      writeString("Time: ") ;
-      sprintf(timetext, "%d", (int)duration_time);
-      writeString(timetext);
+      // duration_time = time_us_32()-start_time;
+      // setTextColor(WHITE) ;
+      // setCursor(65, 0) ;
+      // setTextSize(2) ;
+      // writeString("Time: ") ;
+      // sprintf(timetext, "%d", (int)duration_time);
+      // writeString(timetext);
 
       // //print to the terminal
       // printf("Time: %f\n",(float)duration_time/1000000.0);
@@ -541,27 +742,89 @@ static PT_THREAD (protothread_anim1(struct pt *pt))
     static int begin_time ;
     static int spare_time ;
 
-    // Spawn a boid
-    // with random location
-    spawnBoid(&boid1_x, &boid1_y, &boid1_vx, &boid1_vy, 1);
+
+    //output on VGA
+    // Write some text to VGA
+    static char timetext[40];
+    static int start_time;
+    start_time = time_us_32() ; 
+    static int duration_time;
 
     //count boid
     boid_count++;
+
+    // Spawn a boid
+    int i = 0;
+    for(i = n1; i<n; i++){
+      spawnBoid(&boid_x[i], &boid_y[i], &boid_vx[i], &boid_vy[i], 0);
+    }
 
     while(1) {
       // Measure time at start of thread
       begin_time = time_us_32() ;      
       // erase boid
-      drawRect(fix2int15(boid1_x), fix2int15(boid1_y), 2, 2, BLACK);
+
+      for(i = n1; i<n; i++){
+        drawRect(fix2int15(boid_x[i]), fix2int15(boid_y[i]), 2, 2, BLACK);
+      }
       // update boid's position and velocity
-      wallsAndEdges(&boid1_x, &boid1_y, &boid1_vx, &boid1_vy) ;
+      wallsAndEdges_1(&boid0_x, &boid0_y, &boid0_vx, &boid0_vy) ;
       // draw the boid at its new position
-      drawRect(fix2int15(boid1_x), fix2int15(boid1_y), 2, 2, color); 
+
+      // //# Update boid's position
+      for(i = n1; i<n; i++){
+
+
+        boid_x[i] = boid_x[i] + boid_vx[i];
+        boid_y[i] = boid_y[i] + boid_vy[i];
+
+        
+        if(flag_2 == 1){
+
+          if (hitTopBoundary(boid_y[i])){
+            boid_y[i] = int2fix15(bottom-1);
+              //boid_vy[i] = boid_vy[i] + turnfactor;
+          }
+          if (hitBottomBoundary(boid_y[i])){
+            boid_y[i] = int2fix15(top+1);
+              //boid_vy[i] = boid_vy[i] - turnfactor;
+          }
+
+          if(flag_3 == 1){
+            if (hitRightBoundary(boid_x[i])){
+              boid_x[i] = int2fix15(left+1);
+                //boid_vx[i] = boid_vx[i] - turnfactor;
+            }
+            if (hitLeftBoundary(boid_x[i])){
+              boid_x[i] = int2fix15(right-1);
+                //boid_vx[i] = boid_vx[i] + turnfactor;
+            }
+          }
+        }
+
+        drawRect(fix2int15(boid_x[i]), fix2int15(boid_y[i]), 2, 2, RED);
+      }
+      // draw the boundaries
+      drawArena() ;
       // delay in accordance with frame rate
       spare_time = FRAME_RATE - (time_us_32() - begin_time) ;
       // yield for necessary amount of time
       PT_YIELD_usec(spare_time) ;
      // NEVER exit while
+
+      //VGA output
+      // duration_time = time_us_32()-start_time;
+      // setTextColor(WHITE) ;
+      // setCursor(65, 0) ;
+      // setTextSize(2) ;
+      // writeString("Time: ") ;
+      // sprintf(timetext, "%d", (int)duration_time);
+      // writeString(timetext);
+
+      // //print to the terminal
+      // printf("Time: %f\n",(float)duration_time/1000000.0);
+      // printf("Boid numbers: %d\n", boid_count);
+      // printf("FRAME_RATE: %d\n", FRAME_RATE);
     } // END WHILE(1)
   PT_END(pt);
 } // animation thread
@@ -589,8 +852,8 @@ int main(){
   initVGA() ;
 
   // start core 1 
-  //multicore_reset_core1();
-  //multicore_launch_core1(&core1_main);
+  multicore_reset_core1();
+  multicore_launch_core1(&core1_main);
 
   // add threads
   pt_add_thread(protothread_serial);
