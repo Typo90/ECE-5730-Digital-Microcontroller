@@ -41,9 +41,21 @@
 #include "mpu6050.h"
 #include "pt_cornell_rp2040_v1.h"
 
+
+
 // Arrays in which raw measurements will be stored
 fix15 acceleration[3], gyro[3];
+fix15 accel_angle, gyro_angle_delta, complementary_angle;
 
+
+// #define multfix15(a,b) ((fix15)((((signed long long)(a))*((signed long long)(b)))>>15))
+// #define float2fix15(a) ((fix15)((a)*32768.0)) // 2^15
+// #define fix2float15(a) ((float)(a)/32768.0)
+// #define absfix15(a) abs(a) 
+// #define int2fix15(a) ((fix15)(a << 15))
+// #define fix2int15(a) ((int)(a >> 15))
+// #define char2fix15(a) (fix15)(((fix15)(a)) << 15)
+// #define divfix(a,b) (fix15)(div_s64s64( (((signed long long)(a)) << 15), ((signed long long)(b))))
 // character array
 char screentext[40];
 
@@ -60,8 +72,12 @@ static struct pt_sem vga_semaphore ;
 
 // Some paramters for PWM
 #define WRAPVAL 5000
-#define CLKDIV  25.0
+#define CLKDIV  25.0f
 uint slice_num ;
+
+// PWM duty cycle
+volatile int control ;
+volatile int old_control ;
 
 // Interrupt service routine
 void on_pwm_wrap() {
@@ -69,12 +85,26 @@ void on_pwm_wrap() {
     // Clear the interrupt flag that brought us here
     pwm_clear_irq(pwm_gpio_to_slice_num(5));
 
+    // Update duty cycle
+    if (control!=old_control) {
+        old_control = control ;       
+        pwm_set_chan_level(slice_num, PWM_CHAN_B, control);
+    }
+
     // Read the IMU
     // NOTE! This is in 15.16 fixed point. Accel in g's, gyro in deg/s
     // If you want these values in floating point, call fix2float15() on
     // the raw measurements.
     mpu6050_read_raw(acceleration, gyro);
 
+    // Accelerometer angle (degrees - 15.16 fixed point)
+    accel_angle = multfix15(divfix(acceleration[0], acceleration[1]), float2fix15(57.297)) ;
+
+    // Gyro angle delta (measurement times timestep) (15.16 fixed point)
+    gyro_angle_delta = multfix15(gyro[2], zeropt001) ;
+
+    // Complementary angle (degrees - 15.16 fixed point)
+    complementary_angle = multfix15(complementary_angle - gyro_angle_delta, float2fix15(0.999)) + multfix15(accel_angle, float2fix15(0.0001));
     // Signal VGA to draw
     PT_SEM_SIGNAL(pt, &vga_semaphore);
 }
@@ -150,6 +180,8 @@ static PT_THREAD (protothread_vga(struct pt *pt))
             drawPixel(xcoord, 430 - (int)(NewRange*((float)((fix2float15(acceleration[1])*120.0)-OldMin)/OldRange)), RED) ;
             drawPixel(xcoord, 430 - (int)(NewRange*((float)((fix2float15(acceleration[2])*120.0)-OldMin)/OldRange)), GREEN) ;
 
+            drawPixel(xcoord, 300 - (int)(NewRange*((float)((fix2float15(complementary_angle))-OldMin)/OldRange)), RED) ;
+
             // Draw top plot
             drawPixel(xcoord, 230 - (int)(NewRange*((float)((fix2float15(gyro[0]))-OldMin)/OldRange)), WHITE) ;
             drawPixel(xcoord, 230 - (int)(NewRange*((float)((fix2float15(gyro[1]))-OldMin)/OldRange)), RED) ;
@@ -176,6 +208,21 @@ static PT_THREAD (protothread_serial(struct pt *pt))
     static int test_in ;
     static float float_in ;
     while(1) {
+
+        //================================
+        //change duty cycle
+        //================================
+        sprintf(pt_serial_out_buffer, "input a duty cycle (0-5000): ");
+        serial_write ;
+        // spawn a thread to do the non-blocking serial read
+        serial_read ;
+        // convert input string to number
+        sscanf(pt_serial_in_buffer,"%d", &test_in) ;
+        if (test_in > 5000) continue ;
+        else if (test_in < 0) continue ;
+        else control = test_in ;
+        //================================
+
         sprintf(pt_serial_out_buffer, "input a command: ");
         serial_write ;
         // spawn a thread to do the non-blocking serial read
@@ -246,8 +293,8 @@ int main() {
     pwm_set_clkdiv(slice_num, CLKDIV) ;
 
     // This sets duty cycle
-    pwm_set_chan_level(slice_num, PWM_CHAN_B, 0);
-    pwm_set_chan_level(slice_num, PWM_CHAN_A, 0);
+    pwm_set_chan_level(slice_num, PWM_CHAN_B, 3125);
+    pwm_set_chan_level(slice_num, PWM_CHAN_A, 3125);
 
     // Start the channel
     pwm_set_mask_enabled((1u << slice_num));
