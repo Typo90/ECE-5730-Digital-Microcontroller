@@ -18,6 +18,7 @@
  *  - GPIO 9 ---> MPU6050 SCL
  *  - 3.3v ---> MPU6050 VCC
  *  - RP2040 GND ---> MPU6050 GND
+ *  - GPIO 5 ---> PWM output
  */
 
 
@@ -79,6 +80,9 @@ uint slice_num ;
 volatile int control ;
 volatile int old_control ;
 
+
+static char Angeltext[40];
+
 // Interrupt service routine
 void on_pwm_wrap() {
 
@@ -88,7 +92,14 @@ void on_pwm_wrap() {
     // Update duty cycle
     if (control!=old_control) {
         old_control = control ;       
-        pwm_set_chan_level(slice_num, PWM_CHAN_B, control);
+        if(control > 0){
+            pwm_set_chan_level(slice_num, PWM_CHAN_B, control);
+            pwm_set_chan_level(slice_num, PWM_CHAN_A, 0);
+        }else{
+            pwm_set_chan_level(slice_num, PWM_CHAN_B, 0);
+            pwm_set_chan_level(slice_num, PWM_CHAN_A, -control);
+        }
+        
     }
 
     // Read the IMU
@@ -97,14 +108,19 @@ void on_pwm_wrap() {
     // the raw measurements.
     mpu6050_read_raw(acceleration, gyro);
 
+    // Gather measurements
+    mpu6050_read_raw(acceleration, gyro);
+
     // Accelerometer angle (degrees - 15.16 fixed point)
-    accel_angle = multfix15(divfix(acceleration[0], acceleration[1]), float2fix15(57.297)) ;
+    accel_angle = multfix15(divfix(acceleration[0], acceleration[1]), oneeightyoverpi) ;
 
     // Gyro angle delta (measurement times timestep) (15.16 fixed point)
     gyro_angle_delta = multfix15(gyro[2], zeropt001) ;
 
     // Complementary angle (degrees - 15.16 fixed point)
-    complementary_angle = multfix15(complementary_angle - gyro_angle_delta, float2fix15(0.999)) + multfix15(accel_angle, float2fix15(0.0001));
+    complementary_angle = multfix15(complementary_angle - gyro_angle_delta, zeropt999) + multfix15(accel_angle, zeropt001);
+
+    //Angeltext = 
     // Signal VGA to draw
     PT_SEM_SIGNAL(pt, &vga_semaphore);
 }
@@ -167,6 +183,14 @@ static PT_THREAD (protothread_vga(struct pt *pt))
         PT_SEM_WAIT(pt, &vga_semaphore);
         // Increment drawspeed controller
         throttle += 1 ;
+
+        // Display on VGA
+        // fillRect(250, 20, 176, 30, BLACK); // red box
+        // sprintf(Angeltext, "%f", (float)fix2float15(complementary_angle)) ;
+        // setCursor(250, 20) ;
+        // setTextSize(2) ;
+        // writeString(Angeltext) ;
+
         // If the controller has exceeded a threshold, draw
         if (throttle >= threshold) { 
             // Zero drawspeed controller
@@ -180,7 +204,8 @@ static PT_THREAD (protothread_vga(struct pt *pt))
             drawPixel(xcoord, 430 - (int)(NewRange*((float)((fix2float15(acceleration[1])*120.0)-OldMin)/OldRange)), RED) ;
             drawPixel(xcoord, 430 - (int)(NewRange*((float)((fix2float15(acceleration[2])*120.0)-OldMin)/OldRange)), GREEN) ;
 
-            drawPixel(xcoord, 300 - (int)(NewRange*((float)((fix2float15(complementary_angle))-OldMin)/OldRange)), RED) ;
+            drawPixel(xcoord, 330 - (int)(NewRange*((float)((fix2float15(complementary_angle))-OldMin)/OldRange)), CYAN) ;
+
 
             // Draw top plot
             drawPixel(xcoord, 230 - (int)(NewRange*((float)((fix2float15(gyro[0]))-OldMin)/OldRange)), WHITE) ;
@@ -212,14 +237,14 @@ static PT_THREAD (protothread_serial(struct pt *pt))
         //================================
         //change duty cycle
         //================================
-        sprintf(pt_serial_out_buffer, "input a duty cycle (0-5000): ");
+        sprintf(pt_serial_out_buffer, "input a duty cycle (-5000-5000): ");
         serial_write ;
         // spawn a thread to do the non-blocking serial read
         serial_read ;
         // convert input string to number
         sscanf(pt_serial_in_buffer,"%d", &test_in) ;
         if (test_in > 5000) continue ;
-        else if (test_in < 0) continue ;
+        else if (test_in < -5000) continue ;
         else control = test_in ;
         //================================
 
@@ -247,8 +272,8 @@ static PT_THREAD (protothread_serial(struct pt *pt))
 
 // Entry point for core 1
 void core1_entry() {
-    pt_add_thread(protothread_vga) ;
-    pt_schedule_start ;
+    //pt_add_thread(protothread_vga) ;
+    //pt_schedule_start ;
 }
 
 int main() {
@@ -294,7 +319,7 @@ int main() {
 
     // This sets duty cycle
     pwm_set_chan_level(slice_num, PWM_CHAN_B, 3125);
-    pwm_set_chan_level(slice_num, PWM_CHAN_A, 3125);
+    pwm_set_chan_level(slice_num, PWM_CHAN_A, 0);
 
     // Start the channel
     pwm_set_mask_enabled((1u << slice_num));

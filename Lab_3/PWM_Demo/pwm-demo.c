@@ -39,10 +39,18 @@ volatile int old_control ;
 void on_pwm_wrap() {
     // Clear the interrupt flag that brought us here
     pwm_clear_irq(pwm_gpio_to_slice_num(5));
+    pwm_clear_irq(pwm_gpio_to_slice_num(4));
     // Update duty cycle
     if (control!=old_control) {
-        old_control = control ;
-        pwm_set_chan_level(slice_num, PWM_CHAN_B, control);
+        old_control = control ;       
+        if(control > 0){
+            pwm_set_chan_level(slice_num, PWM_CHAN_B, control);
+            pwm_set_chan_level(slice_num, PWM_CHAN_A, 0);
+        }else{
+            pwm_set_chan_level(slice_num, PWM_CHAN_B, 0);
+            pwm_set_chan_level(slice_num, PWM_CHAN_A, -control);
+        }
+        
     }
 }
 
@@ -52,14 +60,14 @@ static PT_THREAD (protothread_serial(struct pt *pt))
     PT_BEGIN(pt) ;
     static int test_in ;
     while(1) {
-        sprintf(pt_serial_out_buffer, "input a duty cycle (0-5000): ");
+        sprintf(pt_serial_out_buffer, "input a duty cycle (-5000-5000): ");
         serial_write ;
         // spawn a thread to do the non-blocking serial read
         serial_read ;
         // convert input string to number
         sscanf(pt_serial_in_buffer,"%d", &test_in) ;
         if (test_in > 5000) continue ;
-        else if (test_in < 0) continue ;
+        else if (test_in < -5000) continue ;
         else control = test_in ;
     }
     PT_END(pt) ;
@@ -75,6 +83,8 @@ int main() {
     ////////////////////////////////////////////////////////////////////////
     // Tell GPIO 5 that it is allocated to the PWM
     gpio_set_function(5, GPIO_FUNC_PWM);
+    gpio_set_function(4, GPIO_FUNC_PWM);
+
 
     // Find out which PWM slice is connected to GPIO 5 (it's slice 2)
     slice_num = pwm_gpio_to_slice_num(5);
@@ -92,6 +102,7 @@ int main() {
 
     // This sets duty cycle
     pwm_set_chan_level(slice_num, PWM_CHAN_B, 3125);
+    pwm_set_chan_level(slice_num, PWM_CHAN_A, 0);
 
     // Start the channel
     pwm_set_mask_enabled((1u << slice_num));
