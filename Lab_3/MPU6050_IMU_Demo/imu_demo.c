@@ -48,6 +48,18 @@
 fix15 acceleration[3], gyro[3];
 fix15 accel_angle, gyro_angle_delta, complementary_angle;
 
+volatile int Kp_int;
+volatile int Ki_int;
+volatile int kd_int;
+
+fix15 Kp = int2fix15(600);
+fix15 Ki = int2fix15(7);
+fix15 Kd = int2fix15(10000);
+fix15 error, error_accumulation, angle_increment;
+
+fix15 desired_angle = float2fix15(3);
+fix15 duty_cycle;
+fix15 Imax = int2fix15(2500);
 
 // #define multfix15(a,b) ((fix15)((((signed long long)(a))*((signed long long)(b)))>>15))
 // #define float2fix15(a) ((fix15)((a)*32768.0)) // 2^15
@@ -86,21 +98,7 @@ static char Angeltext[40];
 // Interrupt service routine
 void on_pwm_wrap() {
 
-    // Clear the interrupt flag that brought us here
-    pwm_clear_irq(pwm_gpio_to_slice_num(5));
 
-    // Update duty cycle
-    if (control!=old_control) {
-        old_control = control ;       
-        if(control > 0){
-            pwm_set_chan_level(slice_num, PWM_CHAN_B, control);
-            pwm_set_chan_level(slice_num, PWM_CHAN_A, 0);
-        }else{
-            pwm_set_chan_level(slice_num, PWM_CHAN_B, 0);
-            pwm_set_chan_level(slice_num, PWM_CHAN_A, -control);
-        }
-        
-    }
 
     // Read the IMU
     // NOTE! This is in 15.16 fixed point. Accel in g's, gyro in deg/s
@@ -113,6 +111,7 @@ void on_pwm_wrap() {
 
     // Accelerometer angle (degrees - 15.16 fixed point)
     accel_angle = multfix15(divfix(acceleration[0], acceleration[1]), oneeightyoverpi) ;
+    accel_angle = -accel_angle;
 
     // Gyro angle delta (measurement times timestep) (15.16 fixed point)
     gyro_angle_delta = multfix15(gyro[2], zeropt001) ;
@@ -120,8 +119,54 @@ void on_pwm_wrap() {
     // Complementary angle (degrees - 15.16 fixed point)
     complementary_angle = multfix15(complementary_angle - gyro_angle_delta, zeropt999) + multfix15(accel_angle, zeropt001);
 
-    //Angeltext = 
-    // Signal VGA to draw
+    // Compute the error
+    error = (desired_angle - complementary_angle) ;
+
+    // Start with angle_increment = 0.0001
+    if (error < 0) {
+        desired_angle -= angle_increment ;
+    }
+    else {
+        desired_angle += angle_increment ;
+    }
+    // Integrate the error
+    error_accumulation += error ;
+
+    // Clamp the integrated error (start with Imax = max_duty_cycle/2)
+    if (error_accumulation>Imax) error_accumulation=Imax ;
+    if (error_accumulation<(-Imax)) error_accumulation=-Imax ;
+
+    // Compute duty cycle with P controller
+    // duty_cycle = kp * error * 1500
+    //duty_cycle = (Kp * error) + (Ki * error_accumulation) ;
+    duty_cycle =  multfix15(Kp, error)   +  multfix15(Ki, error_accumulation);
+
+    //write to PWM
+    control = fix2int15(duty_cycle);
+
+
+    // Clear the interrupt flag that brought us here
+    pwm_clear_irq(pwm_gpio_to_slice_num(5));
+
+    // Update duty cycle
+    if (control!=old_control) {
+        old_control = control ;       
+        if(control > 0){
+            if(control >= 5000){
+                control = 5000;
+            }
+            pwm_set_chan_level(slice_num, PWM_CHAN_B, control);
+            pwm_set_chan_level(slice_num, PWM_CHAN_A, 0);
+        }else{
+            if(control <= -5000){
+                control = 5000;
+            }
+            pwm_set_chan_level(slice_num, PWM_CHAN_B, 0);
+            pwm_set_chan_level(slice_num, PWM_CHAN_A, -control);
+        }
+        
+    }
+
     PT_SEM_SIGNAL(pt, &vga_semaphore);
 }
 
@@ -184,10 +229,16 @@ static PT_THREAD (protothread_vga(struct pt *pt))
         // Increment drawspeed controller
         throttle += 1 ;
 
-        // Display on VGA
-        // fillRect(250, 20, 176, 30, BLACK); // red box
+        // //Display on VGA
+        // fillRect(250, 30, 176, 30, BLACK); // red box
         // sprintf(Angeltext, "%f", (float)fix2float15(complementary_angle)) ;
-        // setCursor(250, 20) ;
+        // setCursor(250, 30) ;
+        // setTextSize(2) ;
+        // writeString(Angeltext) ;
+
+        // fillRect(250, 30, 176, 30, BLACK); // red box
+        // sprintf(Angeltext, "%f", (float)fix2float15(complementary_angle)) ;
+        // setCursor(250, 30) ;
         // setTextSize(2) ;
         // writeString(Angeltext) ;
 
@@ -199,18 +250,34 @@ static PT_THREAD (protothread_vga(struct pt *pt))
             // Erase a column
             drawVLine(xcoord, 0, 480, BLACK) ;
 
-            // Draw bottom plot (multiply by 120 to scale from +/-2 to +/-250)
-            drawPixel(xcoord, 430 - (int)(NewRange*((float)((fix2float15(acceleration[0])*120.0)-OldMin)/OldRange)), WHITE) ;
-            drawPixel(xcoord, 430 - (int)(NewRange*((float)((fix2float15(acceleration[1])*120.0)-OldMin)/OldRange)), RED) ;
-            drawPixel(xcoord, 430 - (int)(NewRange*((float)((fix2float15(acceleration[2])*120.0)-OldMin)/OldRange)), GREEN) ;
+            // //Draw bottom plot (multiply by 120 to scale from +/-2 to +/-250)
+            // drawPixel(xcoord, 430 - (int)(NewRange*((float)((fix2float15(acceleration[0])*120.0)-OldMin)/OldRange)), WHITE) ;
+            // drawPixel(xcoord, 430 - (int)(NewRange*((float)((fix2float15(acceleration[1])*120.0)-OldMin)/OldRange)), RED) ;
+            // drawPixel(xcoord, 430 - (int)(NewRange*((float)((fix2float15(acceleration[2])*120.0)-OldMin)/OldRange)), GREEN) ;
 
-            drawPixel(xcoord, 330 - (int)(NewRange*((float)((fix2float15(complementary_angle))-OldMin)/OldRange)), CYAN) ;
+            drawPixel(xcoord, 330 - (int)(NewRange*((float)((fix2float15(complementary_angle)*5)-OldMin)/OldRange)), CYAN) ;
+            drawPixel(xcoord, 330 - (int)(NewRange*((float)((control*0.008)-OldMin)/OldRange)), RED) ;
+
+            
+            fillRect(250, 30, 176, 30, BLACK); // red box
+            sprintf(Angeltext, "%d", control) ;
+            setCursor(250, 30) ;
+            setTextSize(2) ;
+            writeString(Angeltext) ;
+
+            fillRect(250, 50, 176, 50, BLACK); // red box
+            sprintf(Angeltext, "%f", (float)fix2float15(complementary_angle)) ;
+            setCursor(250, 50) ;
+            setTextSize(2) ;
+            writeString(Angeltext) ;
+            //drawPixel(xcoord, 330 - (int)(NewRange*((float)((control*0.05)-OldMin)/OldRange)), RED) ;
+            //drawPixel(xcoord, 330 - (int)(NewRange*((float)((control*0.05)-OldMin)/OldRange)), RED) ;
 
 
-            // Draw top plot
-            drawPixel(xcoord, 230 - (int)(NewRange*((float)((fix2float15(gyro[0]))-OldMin)/OldRange)), WHITE) ;
-            drawPixel(xcoord, 230 - (int)(NewRange*((float)((fix2float15(gyro[1]))-OldMin)/OldRange)), RED) ;
-            drawPixel(xcoord, 230 - (int)(NewRange*((float)((fix2float15(gyro[2]))-OldMin)/OldRange)), GREEN) ;
+            // //Draw top plot
+            // drawPixel(xcoord, 230 - (int)(NewRange*((float)((fix2float15(gyro[0]))-OldMin)/OldRange)), WHITE) ;
+            // drawPixel(xcoord, 230 - (int)(NewRange*((float)((fix2float15(gyro[1]))-OldMin)/OldRange)), RED) ;
+            // drawPixel(xcoord, 230 - (int)(NewRange*((float)((fix2float15(gyro[2]))-OldMin)/OldRange)), GREEN) ;
 
             // Update horizontal cursor
             if (xcoord < 609) {
@@ -237,43 +304,60 @@ static PT_THREAD (protothread_serial(struct pt *pt))
         //================================
         //change duty cycle
         //================================
-        sprintf(pt_serial_out_buffer, "input a duty cycle (-5000-5000): ");
-        serial_write ;
-        // spawn a thread to do the non-blocking serial read
-        serial_read ;
-        // convert input string to number
-        sscanf(pt_serial_in_buffer,"%d", &test_in) ;
-        if (test_in > 5000) continue ;
-        else if (test_in < -5000) continue ;
-        else control = test_in ;
+        // sprintf(pt_serial_out_buffer, "input a duty cycle (-5000-5000): ");
+        // serial_write ;
+        // // spawn a thread to do the non-blocking serial read
+        // serial_read ;
+        // // convert input string to number
+        // sscanf(pt_serial_in_buffer,"%d", &test_in) ;
+        // if (test_in > 5000) continue ;
+        // else if (test_in < -5000) continue ;
+        // else control = test_in ;
         //================================
 
-        sprintf(pt_serial_out_buffer, "input a command: ");
+
+        //================================
+        //change kp ki kd
+        //================================
+        sprintf(pt_serial_out_buffer, "input Kp, Ki, Kd: ");
         serial_write ;
         // spawn a thread to do the non-blocking serial read
         serial_read ;
         // convert input string to number
-        sscanf(pt_serial_in_buffer,"%c", &classifier) ;
+        sscanf(pt_serial_in_buffer,"%d %d %d", &Kp_int, &Ki_int, &kd_int) ;
 
-        // num_independents = test_in ;
-        if (classifier=='t') {
-            sprintf(pt_serial_out_buffer, "timestep: ");
-            serial_write ;
-            serial_read ;
-            // convert input string to number
-            sscanf(pt_serial_in_buffer,"%d", &test_in) ;
-            if (test_in > 0) {
-                threshold = test_in ;
-            }
-        }
+        Kp = int2fix15(Kp_int);
+        Ki = int2fix15(Ki_int);
+        Kd = int2fix15(kd_int);
+
+        sprintf(pt_serial_out_buffer, "curKp: %d curKi: %d curKd: %d \n", Kp_int, Ki_int, kd_int);
+        serial_write ;
+        // sprintf(pt_serial_out_buffer, "input a command: ");
+        // serial_write ;
+        // // spawn a thread to do the non-blocking serial read
+        // serial_read ;
+        // // convert input string to number
+        // sscanf(pt_serial_in_buffer,"%c", &classifier) ;
+
+        // // num_independents = test_in ;
+        // if (classifier=='t') {
+        //     sprintf(pt_serial_out_buffer, "timestep: ");
+        //     serial_write ;
+        //     serial_read ;
+        //     // convert input string to number
+        //     sscanf(pt_serial_in_buffer,"%d", &test_in) ;
+        //     if (test_in > 0) {
+        //         threshold = test_in ;
+        //     }
+        //}
     }
     PT_END(pt) ;
 }
 
 // Entry point for core 1
 void core1_entry() {
-    //pt_add_thread(protothread_vga) ;
-    //pt_schedule_start ;
+    pt_add_thread(protothread_vga) ;
+    pt_schedule_start ;
 }
 
 int main() {
