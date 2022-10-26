@@ -55,11 +55,11 @@ volatile int kd_int;
 fix15 Kp = int2fix15(600);
 fix15 Ki = int2fix15(7);
 fix15 Kd = int2fix15(10000);
-fix15 error, error_accumulation, angle_increment;
+fix15 error, error_accumulation, angle_increment, prev_error, error_deriv;
 
-fix15 desired_angle = float2fix15(3);
+fix15 desired_angle = float2fix15(0.5);
 fix15 duty_cycle;
-fix15 Imax = int2fix15(2500);
+fix15 Imax = int2fix15(2000);
 
 // #define multfix15(a,b) ((fix15)((((signed long long)(a))*((signed long long)(b)))>>15))
 // #define float2fix15(a) ((fix15)((a)*32768.0)) // 2^15
@@ -136,10 +136,14 @@ void on_pwm_wrap() {
     if (error_accumulation>Imax) error_accumulation=Imax ;
     if (error_accumulation<(-Imax)) error_accumulation=-Imax ;
 
+
+    error_deriv = (error - prev_error) ;
+    prev_error = error ;
+    
     // Compute duty cycle with P controller
     // duty_cycle = kp * error * 1500
     //duty_cycle = (Kp * error) + (Ki * error_accumulation) ;
-    duty_cycle =  multfix15(Kp, error)   +  multfix15(Ki, error_accumulation);
+    duty_cycle =  multfix15(Kp, error)   +  multfix15(Ki, error_accumulation) + multfix15(Kd, error_deriv);
 
     //write to PWM
     control = fix2int15(duty_cycle);
@@ -193,35 +197,42 @@ static PT_THREAD (protothread_vga(struct pt *pt))
     setTextColor(WHITE);
 
     // Draw bottom plot
-    drawHLine(75, 430, 5, CYAN) ;
-    drawHLine(75, 355, 5, CYAN) ;
-    drawHLine(75, 280, 5, CYAN) ;
-    drawVLine(80, 280, 150, CYAN) ;
-    sprintf(screentext, "0") ;
-    setCursor(50, 350) ;
-    writeString(screentext) ;
-    sprintf(screentext, "+2") ;
-    setCursor(50, 280) ;
-    writeString(screentext) ;
-    sprintf(screentext, "-2") ;
-    setCursor(50, 425) ;
-    writeString(screentext) ;
+    // drawHLine(75, 430, 5, CYAN) ;
+    // drawHLine(75, 355, 5, CYAN) ;
+    // drawHLine(75, 280, 5, CYAN) ;
+    // drawVLine(80, 280, 150, CYAN) ;
+    // sprintf(screentext, "0") ;
+    // setCursor(50, 350) ;
+    // writeString(screentext) ;
+    // sprintf(screentext, "+2") ;
+    // setCursor(50, 280) ;
+    // writeString(screentext) ;
+    // sprintf(screentext, "-2") ;
+    // setCursor(50, 425) ;
+    // writeString(screentext) ;
 
     // Draw top plot
-    drawHLine(75, 230, 5, CYAN) ;
-    drawHLine(75, 155, 5, CYAN) ;
-    drawHLine(75, 80, 5, CYAN) ;
-    drawVLine(80, 80, 150, CYAN) ;
-    sprintf(screentext, "0") ;
+    // drawHLine(75, 230, 5, CYAN) ;
+    // drawHLine(75, 155, 5, CYAN) ;
+    // drawHLine(75, 80, 5, CYAN) ;
+    // drawVLine(80, 80, 150, CYAN) ;
+    // sprintf(screentext, "0") ;
+    // setCursor(50, 150) ;
+    // writeString(screentext) ;
+    // sprintf(screentext, "+250") ;
+    // setCursor(45, 75) ;
+    // writeString(screentext) ;
+    // sprintf(screentext, "-250") ;
+    // setCursor(45, 225) ;
+    // writeString(screentext) ;
+    
+    sprintf(screentext, "CYAN for complementary_angle") ;
     setCursor(50, 150) ;
     writeString(screentext) ;
-    sprintf(screentext, "+250") ;
-    setCursor(45, 75) ;
+
+     sprintf(screentext, "RED for control value") ;
+    setCursor(50, 225) ;
     writeString(screentext) ;
-    sprintf(screentext, "-250") ;
-    setCursor(45, 225) ;
-    writeString(screentext) ;
-    
 
     while (true) {
         // Wait on semaphore
