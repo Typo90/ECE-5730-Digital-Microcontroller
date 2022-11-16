@@ -96,16 +96,28 @@ static void send_data(struct shift_register_74hc595_t *shreg_74hc595, unsigned i
  * \param pin Pin number (0-7) or (QA-QH)
  * \param value 1 for high, 0 for low
  */
-static void shreg_74hc595_put(struct shift_register_74hc595_t *shreg_74hc595, shift_register_74hc595_pin_t pin, bool value) {    
-    if (value) {
-        // Use OR operator to set pin high
-        shreg_74hc595->pin |= (unsigned int) pow(2, (7 - pin));
-    } else {
-        // Take complement of pin_bin and use AND operator to set pin low
-        shreg_74hc595->pin &= ~(unsigned int) pow(2, (7 - pin));
-    }
-        // Send pin data to 74HC595
-        send_data(shreg_74hc595, shreg_74hc595->pin);
+// static void shreg_74hc595_put(struct shift_register_74hc595_t *shreg_74hc595, shift_register_74hc595_pin_t pin, bool value) {    
+//     if (value) {
+//         // Use OR operator to set pin high
+//         shreg_74hc595->pin |= (unsigned int) pow(2, (7 - pin));
+//     } else {
+//         // Take complement of pin_bin and use AND operator to set pin low
+//         shreg_74hc595->pin &= ~(unsigned int) pow(2, (7 - pin));
+//     }
+//         // Send pin data to 74HC595
+//         //send_data(shreg_74hc595, shreg_74hc595->pin);
+// }
+
+
+    // // Set default pins state
+    // shreg_74hc595->pin = 0b00000000;
+
+static void shreg_74hc595_put(struct shift_register_74hc595_t *shreg_74hc595, unsigned int pin) {   
+
+    // Send pin data to 74HC595
+    send_data(shreg_74hc595, shreg_74hc595->pin);
+
+
 }
 
 #endif

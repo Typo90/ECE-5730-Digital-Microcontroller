@@ -38,64 +38,50 @@ SRCLK       GPIO 11
 SRCLR       3.3V
 */
 
-// void main()
-// {
-//   ShiftRegister reg = shift_register_new((PinConfig){
-//       .SERIAL_PIN = 9,
-//       .SHIFT_REGISTER_CLOCK_PIN = 11,
-//       .STORAGE_REGISTER_CLOCK_PIN = 10});
+void main()
+{
+  ShiftRegister col_1_reg = shift_register_new((PinConfig){
+      .SERIAL_PIN = 12,
+      .SHIFT_REGISTER_CLOCK_PIN = 10,
+      .STORAGE_REGISTER_CLOCK_PIN = 11});
 
-//   int switch_on = 0;
+  ShiftRegister row_reg = shift_register_new((PinConfig){
+      .SERIAL_PIN = 9,
+      .SHIFT_REGISTER_CLOCK_PIN = 10,
+      .STORAGE_REGISTER_CLOCK_PIN = 11});
 
-//   while (true)
-//   {
-//     shift_register_write_bit(&reg, 1);
-//     shift_register_flush(&reg);
 
-//     sleep_ms(1050);
-//     switch_on++;
+  // shift_register_write_bitmask(&row_reg, 0b1111111);
+  // shift_register_flush(&row_reg);
+  // sleep_ms(1050);
 
-//     if (switch_on = 8)
-//     {
-//       shift_register_reset_storage(&reg);
-//       sleep_ms(1050);
-//       switch_on = 0;
-//     }
-//   }
-// }
+  // shift_register_write_bitmask(&col_1_reg, 0b1111111);
+  // shift_register_flush(&col_1_reg);
+  // sleep_ms(1050);
 
-#include "shift_register_74hc595.h"
+  // while(true){
+  //   //QE
+  //   shift_register_write_bitmask(&row_reg, 0b0000000);
+  //   shift_register_flush(&row_reg);
+  //   sleep_ms(1050);
 
-// Define shift register pins
-#define ROW_1 12
-#define COl 9
-#define CLK_PIN 11
-#define LATCH_PIN 10
 
-int main() {
-    // Set clk pin as output
-    gpio_init(CLK_PIN);
-    gpio_set_dir(CLK_PIN, GPIO_OUT);
-    
-    // Set data pin as output
-    gpio_init(ROW_1);
-    gpio_set_dir(ROW_1, GPIO_OUT);
+  //   shift_register_write_bitmask(&row_reg, 0b1111111);
+  //   shift_register_flush(&row_reg);
+  //   sleep_ms(1050);
 
-    // Set latch pin as output
-    gpio_init(LATCH_PIN);
-    gpio_set_dir(LATCH_PIN, GPIO_OUT);
+  // }
 
-    // Create new shift register
-    struct shift_register_74hc595_t *myreg = new_shreg_74hc595(CLK_PIN, ROW_1, LATCH_PIN);
-    
-    while (1) {
-        for (size_t qi = QA; qi <= QH; qi++) {
-            shreg_74hc595_put(myreg, qi, 1);
-            sleep_ms(500);
-        }
-        for (size_t qi = QA; qi <= QH; qi++) {
-            shreg_74hc595_put(myreg, qi, 0);
-            sleep_ms(500);
-        }
-    }
+  while(true){
+    //shift_register_write_bitmask(&col_1_reg, 0b10101010);
+    shift_register_write_bitmask(&col_1_reg, 0b11110000);
+    shift_register_flush(&col_1_reg);
+    sleep_ms(1050);
+
+    shift_register_write_bitmask(&col_1_reg, 0b0000000);
+    shift_register_flush(&col_1_reg);
+    sleep_ms(1050);
+  }
+
+
 }

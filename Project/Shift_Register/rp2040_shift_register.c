@@ -110,6 +110,14 @@ ShiftRegister shift_register_new(PinConfig pc)
 
 /* External API */
 
+void shift_register_write_seq(ShiftRegister *reg, int seq[])
+{
+  for(int i = 0; i<8; i++){
+    shift_register_write_bit(reg, seq[i]);
+  }
+  //return reg->write_bit(reg, b);
+}
+
 bool shift_register_write_bit(ShiftRegister *reg, bool b)
 {
   return reg->write_bit(reg, b);
