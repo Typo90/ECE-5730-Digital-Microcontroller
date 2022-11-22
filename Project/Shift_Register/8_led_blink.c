@@ -92,6 +92,9 @@ void main()
     // shift_register_flush(&col_1_reg);
     // sleep_ms(1050);
 
+  shift_register_write_bitmask(&row_reg, 0b11110000);
+  shift_register_flush(&row_reg);
+
   while(true){
     //shift_register_write_bitmask(&col_1_reg, 0b10101010);
     // shift_register_write_bitmask(&col_1_reg, 0b11110000);
@@ -99,9 +102,75 @@ void main()
     // sleep_ms(1050);
 
 
+
     shift_register_write_bitmask(&row_reg, 0b00000000);
     shift_register_flush(&row_reg);
+    
 
+    // reg 2
+
+    shift_register_write_bitmask(&col_4_reg, 0b10000000);
+    shift_register_flush(&col_4_reg);
+    sleep_ms(1050);
+
+    shift_register_write_bitmask(&col_4_reg, 0b01000000);
+    shift_register_flush(&col_4_reg);
+    sleep_ms(1050);
+
+    shift_register_write_bitmask(&col_4_reg, 0b00100000);
+    shift_register_flush(&col_4_reg);
+    sleep_ms(1050);
+
+    shift_register_write_bitmask(&col_4_reg, 0b00010000);
+    shift_register_flush(&col_4_reg);
+    sleep_ms(1050);
+
+    // reg 3 
+    shift_register_write_bitmask(&row_reg, 0b00000000);
+    shift_register_flush(&row_reg);
+    sleep_ms(1050);
+    
+    shift_register_write_bitmask(&col_3_reg, 0b10000000);
+    shift_register_flush(&col_3_reg);
+    sleep_ms(1050);
+
+    shift_register_write_bitmask(&col_3_reg, 0b01000000);
+    shift_register_flush(&col_3_reg);
+    sleep_ms(1050);
+
+    shift_register_write_bitmask(&col_3_reg, 0b00100000);
+    shift_register_flush(&col_3_reg);
+    sleep_ms(1050);
+
+    shift_register_write_bitmask(&col_3_reg, 0b00010000);
+    shift_register_flush(&col_3_reg);
+    sleep_ms(1050);
+    
+    // reg 2
+    shift_register_write_bitmask(&row_reg, 0b00000000);
+    shift_register_flush(&row_reg);
+    sleep_ms(1050);
+    
+    shift_register_write_bitmask(&col_2_reg, 0b10000000);
+    shift_register_flush(&col_2_reg);
+    sleep_ms(1050);
+
+    shift_register_write_bitmask(&col_2_reg, 0b01000000);
+    shift_register_flush(&col_2_reg);
+    sleep_ms(1050);
+
+    shift_register_write_bitmask(&col_2_reg, 0b00100000);
+    shift_register_flush(&col_2_reg);
+    sleep_ms(1050);
+
+    shift_register_write_bitmask(&col_2_reg, 0b00010000);
+    shift_register_flush(&col_2_reg);
+    sleep_ms(1050);
+
+    // reg 1
+    shift_register_write_bitmask(&row_reg, 0b00000000);
+    shift_register_flush(&row_reg);
+    sleep_ms(1050);
     
     shift_register_write_bitmask(&col_1_reg, 0b10000000);
     shift_register_flush(&col_1_reg);
@@ -118,18 +187,10 @@ void main()
     shift_register_write_bitmask(&col_1_reg, 0b00010000);
     shift_register_flush(&col_1_reg);
     sleep_ms(1050);
-    // // shift_register_write_bitmask(&col_1_reg, 0b0000000);
-    // // shift_register_flush(&col_1_reg);
-    // // sleep_ms(1050);
 
-    // shift_register_write_bitmask(&row_reg, 0b11110000);
-    // shift_register_flush(&row_reg);
-    // sleep_ms(1050);
-
-    // shift_register_write_bitmask(&row_reg, 0b0000000);
-    // shift_register_flush(&row_reg);
-    // sleep_ms(1050);
   }
+
+}
 
   void draw(int x, int y, int z){
     if(x > 4 || x < 0 || y > 4 || y < 0){
@@ -147,14 +208,4 @@ void main()
       y--;
     }
 
-    shift_register_write_bitmask(&col_1_reg, 0b00100000);
-    shift_register_flush(&col_1_reg);
-    sleep_ms(1050);
-
-    shift_register_write_bitmask(&col_1_reg, 0b00010000);
-    shift_register_flush(&col_1_reg);
-    sleep_ms(1050);
-
   }
-
-}
