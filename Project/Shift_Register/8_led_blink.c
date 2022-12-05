@@ -197,15 +197,23 @@ void main()
       return;
     }
 
-    u_int8_t col_val = 0b10000000;
+    u_int8_t col_val = 0b00000000;
     while(x > 0){
       col_val >> 1;
       x--;
     }
-    u_int8_t row_val = 0b10000000;
+    u_int8_t row_val = 0b00000000;
     while(y > 0){
       row_val >> 1;
       y--;
+    }
+
+    if(z == 0){
+      shift_register_write_bitmask(&row_reg, col_val);
+      shift_register_write_bitmask(&col_1_reg, col_val);
+      shift_register_flush(&col_1_reg);
+    }else if(z == 1){
+      
     }
 
   }
