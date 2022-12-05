@@ -14,6 +14,11 @@
 #include <pico/stdlib.h>
 #include "rp2040_shift_register.h"
 
+
+#define ROW_1 0
+#define ROW_2 1
+#define ROW_3 2
+#define ROW_4 3
 /*
 Pinouts:
     ___   ___
@@ -37,78 +42,60 @@ RCLK        GPIO 10
 SRCLK       GPIO 11
 SRCLR       3.3V
 */
-
-void main()
-{
-
-
-  ShiftRegister row_reg = shift_register_new((PinConfig){
-      .SERIAL_PIN = 15,
-      .SHIFT_REGISTER_CLOCK_PIN = 10,
-      .STORAGE_REGISTER_CLOCK_PIN = 11});
-
-  ShiftRegister col_1_reg = shift_register_new((PinConfig){
-      .SERIAL_PIN = 14,
-      .SHIFT_REGISTER_CLOCK_PIN = 10,
-      .STORAGE_REGISTER_CLOCK_PIN = 11});
-
-  ShiftRegister col_2_reg = shift_register_new((PinConfig){
-      .SERIAL_PIN = 13,
-      .SHIFT_REGISTER_CLOCK_PIN = 10,
-      .STORAGE_REGISTER_CLOCK_PIN = 11});
-
-  ShiftRegister col_3_reg = shift_register_new((PinConfig){
-      .SERIAL_PIN = 12,
-      .SHIFT_REGISTER_CLOCK_PIN = 10,
-      .STORAGE_REGISTER_CLOCK_PIN = 11});
-
-  ShiftRegister col_4_reg = shift_register_new((PinConfig){
-      .SERIAL_PIN = 9,
-      .SHIFT_REGISTER_CLOCK_PIN = 10,
-      .STORAGE_REGISTER_CLOCK_PIN = 11});
+ShiftRegister row_reg;
+ShiftRegister col_1_reg;
+ShiftRegister col_2_reg;
+ShiftRegister col_3_reg;
+ShiftRegister col_4_reg;
 
 
-  // shift_register_write_bitmask(&row_reg, 0b1111111);
-  // shift_register_flush(&row_reg);
-  // sleep_ms(1050);
-
-  // shift_register_write_bitmask(&col_1_reg, 0b1111111);
-  // shift_register_flush(&col_1_reg);
-  // sleep_ms(1050);
-
-  // while(true){
-  //   //QE
-  //   shift_register_write_bitmask(&row_reg, 0b0000000);
-  //   shift_register_flush(&row_reg);
-  //   sleep_ms(1050);
+void testRow(){
+  u_int8_t col_val = 0b10000000;
+  
+  gpio_put(ROW_1, 0);
+  gpio_put(ROW_2, 1);
+  gpio_put(ROW_3, 1);
+  gpio_put(ROW_4, 1);
 
 
-  //   shift_register_write_bitmask(&row_reg, 0b1111111);
-  //   shift_register_flush(&row_reg);
-  //   sleep_ms(1050);
+  shift_register_write_bitmask(&col_1_reg, col_val);
+  shift_register_flush(&col_1_reg);
 
-  // }
-    // shift_register_write_bitmask(&col_1_reg, 0b11110000);
-    // shift_register_flush(&col_1_reg);
-    // sleep_ms(1050);
-
-  shift_register_write_bitmask(&row_reg, 0b11110000);
-  shift_register_flush(&row_reg);
-
-  while(true){
-    //shift_register_write_bitmask(&col_1_reg, 0b10101010);
-    // shift_register_write_bitmask(&col_1_reg, 0b11110000);
-    // shift_register_flush(&col_1_reg);
-    // sleep_ms(1050);
+}
 
 
+void drawOnePointRow(int z){
+  if(z == 0){
+    gpio_put(ROW_1, 0);
+    gpio_put(ROW_2, 1);
+    gpio_put(ROW_3, 1);
+    gpio_put(ROW_4, 1);
+  }else if(z == 1){
+    gpio_put(ROW_1, 1);
+    gpio_put(ROW_2, 0);
+    gpio_put(ROW_3, 1);
+    gpio_put(ROW_4, 1);
+  }else if(z == 2){
+    gpio_put(ROW_1, 1);
+    gpio_put(ROW_2, 1);
+    gpio_put(ROW_3, 0);
+    gpio_put(ROW_4, 1);
+  }else if(z == 3){
+    gpio_put(ROW_1, 1);
+    gpio_put(ROW_2, 1);
+    gpio_put(ROW_3, 1);
+    gpio_put(ROW_4, 0);
+  }
+}
 
+void lineByLine(){
+
+    // row to ALL ground
     shift_register_write_bitmask(&row_reg, 0b00000000);
     shift_register_flush(&row_reg);
     
 
-    // reg 2
-
+    // reg 4
     shift_register_write_bitmask(&col_4_reg, 0b10000000);
     shift_register_flush(&col_4_reg);
     sleep_ms(1050);
@@ -187,33 +174,111 @@ void main()
     shift_register_write_bitmask(&col_1_reg, 0b00010000);
     shift_register_flush(&col_1_reg);
     sleep_ms(1050);
+}
+
+void drawOnePoint(int x, int y, int z){
+    if(x > 4 || x < 0 || y > 4 || y < 0){
+      return;
+    }
+
+
+    u_int8_t col_val = 0b10000000;
+
+    // x == 0, col_val = 0b1000000;
+    // x == 1, col_val = 0b0100000;
+    // x == 2, col_val = 0b0010000;
+    if(x == 0){
+      col_val = 0b10000000;
+    }else if(x == 1){
+      col_val = 0b01000000;
+    }else if(x == 2){
+      col_val = 0b00100000;
+    }else if(x == 3){
+      col_val = 0b00010000;
+    }
+
+    if(y == 0){
+      drawOnePointRow(z);
+      shift_register_write_bitmask(&col_1_reg, col_val);
+      shift_register_flush(&col_1_reg);
+    }else if(y == 1){
+      drawOnePointRow(z);
+      shift_register_write_bitmask(&col_2_reg, col_val);
+      shift_register_flush(&col_2_reg);
+    }else if(y == 2){
+      drawOnePointRow(z);
+      shift_register_write_bitmask(&col_3_reg, col_val);
+      shift_register_flush(&col_3_reg);
+    }else if(y == 3){
+      drawOnePointRow(z);
+      shift_register_write_bitmask(&col_4_reg, col_val);
+      shift_register_flush(&col_4_reg);
+    }
+
+}
+
+void main()
+{
+
+
+  row_reg = shift_register_new((PinConfig){
+      .SERIAL_PIN = 15,
+      .SHIFT_REGISTER_CLOCK_PIN = 10,
+      .STORAGE_REGISTER_CLOCK_PIN = 11});
+
+  col_1_reg = shift_register_new((PinConfig){
+      .SERIAL_PIN = 14,
+      .SHIFT_REGISTER_CLOCK_PIN = 10,
+      .STORAGE_REGISTER_CLOCK_PIN = 11});
+
+  col_2_reg = shift_register_new((PinConfig){
+      .SERIAL_PIN = 13,
+      .SHIFT_REGISTER_CLOCK_PIN = 10,
+      .STORAGE_REGISTER_CLOCK_PIN = 11});
+
+  col_3_reg = shift_register_new((PinConfig){
+      .SERIAL_PIN = 12,
+      .SHIFT_REGISTER_CLOCK_PIN = 10,
+      .STORAGE_REGISTER_CLOCK_PIN = 11});
+
+  col_4_reg = shift_register_new((PinConfig){
+      .SERIAL_PIN = 9,
+      .SHIFT_REGISTER_CLOCK_PIN = 10,
+      .STORAGE_REGISTER_CLOCK_PIN = 11});
+
+
+  gpio_init(ROW_1);
+  gpio_set_dir(ROW_1, GPIO_OUT);
+
+  gpio_init(ROW_2);
+  gpio_set_dir(ROW_2, GPIO_OUT);
+
+  gpio_init(ROW_3);
+  gpio_set_dir(ROW_3, GPIO_OUT);
+
+  gpio_init(ROW_4);
+  gpio_set_dir(ROW_4, GPIO_OUT);
+
+  while(true){
+
+    for(int i = 0; i<4; i++){
+      for(int j = 0; j<4; j++){
+        for(int k = 0; k<4; k++){
+          drawOnePoint(i, j, k);
+          sleep_ms(250);
+        }
+      }
+    }
+
+    //testRow();
+
+    //drawOnePoint(0, 0, 0);
+
+    //lineByLine();
 
   }
 
 }
 
-  void draw(int x, int y, int z){
-    if(x > 4 || x < 0 || y > 4 || y < 0){
-      return;
-    }
 
-    u_int8_t col_val = 0b00000000;
-    while(x > 0){
-      col_val >> 1;
-      x--;
-    }
-    u_int8_t row_val = 0b00000000;
-    while(y > 0){
-      row_val >> 1;
-      y--;
-    }
 
-    if(z == 0){
-      shift_register_write_bitmask(&row_reg, col_val);
-      shift_register_write_bitmask(&col_1_reg, col_val);
-      shift_register_flush(&col_1_reg);
-    }else if(z == 1){
-      
-    }
-
-  }
