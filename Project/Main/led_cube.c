@@ -43,8 +43,8 @@ SRCLR       3.3V
 
 
 // Define pins for the LED cube's rows
-#define ROW_1 0
-#define ROW_2 1
+#define ROW_1 22
+#define ROW_2 21
 #define ROW_3 2
 #define ROW_4 3
 
@@ -240,150 +240,6 @@ void FFTfix(fix15 fr[], fix15 fi[]) {
     }
 }
 
-// Runs on core 0
-static PT_THREAD (protothread_fft(struct pt *pt))
-{
-    // Indicate beginning of thread
-    PT_BEGIN(pt) ;
-    printf("Starting capture\n") ;
-    // Start the ADC channel
-    dma_start_channel_mask((1u << sample_chan)) ;
-    // Start the ADC
-    adc_run(true) ;
-
-    // Declare some static variables
-    static int height ;             // for scaling display
-    static float max_freqency ;     // holds max frequency
-    static int i ;                  // incrementing loop variable
-
-    static fix15 max_fr ;           // temporary variable for max freq calculation
-    static int max_fr_dex ;         // index of max frequency
-
-    // Write some text to VGA
-    setTextColor(WHITE) ;
-    setCursor(65, 0) ;
-    setTextSize(1) ;
-    writeString("Raspberry Pi Pico") ;
-    setCursor(65, 10) ;
-    writeString("FFT demo") ;
-    setCursor(65, 20) ;
-    writeString("Hunter Adams") ;
-    setCursor(65, 30) ;
-    writeString("vha3@cornell.edu") ;
-    setCursor(250, 0) ;
-    setTextSize(2) ;
-    writeString("Max freqency:") ;
-
-    // Will be used to write dynamic text to screen
-    static char freqtext[40];
-
-
-    while(1) {
-        // Wait for NUM_SAMPLES samples to be gathered
-        // Measure wait time with timer. THIS IS BLOCKING
-        dma_channel_wait_for_finish_blocking(sample_chan);
-
-        // Copy/window elements into a fixed-point array
-        for (i=0; i<NUM_SAMPLES; i++) {
-            fr[i] = multfix15(int2fix15((int)sample_array[i]), window[i]) ;
-            fi[i] = (fix15) 0 ;
-        }
-
-        // Zero max frequency and max frequency index
-        max_fr = 0 ;
-        max_fr_dex = 0 ;
-
-        // Restart the sample channel, now that we have our copy of the samples
-        dma_channel_start(control_chan) ;
-
-        // Compute the FFT
-        FFTfix(fr, fi) ;
-
-        // Find the magnitudes (alpha max plus beta min)
-        for (int i = 0; i < (NUM_SAMPLES>>1); i++) {  
-            // get the approx magnitude
-            fr[i] = abs(fr[i]); 
-            fi[i] = abs(fi[i]);
-            // reuse fr to hold magnitude
-            fr[i] = max(fr[i], fi[i]) + 
-                    multfix15(min(fr[i], fi[i]), zero_point_4); 
-
-            // Keep track of maximum
-            if (fr[i] > max_fr && i>4) {
-                max_fr = fr[i] ;
-                max_fr_dex = i ;
-            }
-        }
-        // Compute max frequency in Hz
-        max_freqency = max_fr_dex * (Fs/NUM_SAMPLES) ;
-
-        if(max_freqency < 250){
-          drawFFTLayer0();
-          sleep_ms(200);
-        }else if(max_freqency < 500){
-          drawFFTLayer1();
-          sleep_ms(200);
-        }else if(max_freqency < 750){
-          drawFFTLayer2();
-          sleep_ms(200);
-        }else if(max_freqency < 1000){
-          drawFFTLayer3();
-          sleep_ms(200);
-        }else if(max_freqency < 1250){
-          drawFFTLayer4();
-          sleep_ms(200);
-        }else if(max_freqency < 1500){
-          drawFFTLayer5();
-          sleep_ms(200);
-        }else if(max_freqency < 1750){
-          drawFFTLayer6();
-          sleep_ms(200);
-        }else if(max_freqency < 2000){
-          drawFFTLayer7();
-          sleep_ms(200);
-        }
-
-
-        // Display on VGA
-        fillRect(250, 20, 176, 30, BLACK); // red box
-        sprintf(freqtext, "%d", (int)max_freqency) ;
-        setCursor(250, 20) ;
-        setTextSize(2) ;
-        writeString(freqtext) ;
-
-
-
-
-        // Update the FFT display
-        for (int i=5; i<(NUM_SAMPLES>>1); i++) {
-            drawVLine(59+i, 50, 429, BLACK);
-            height = fix2int15(multfix15(fr[i], int2fix15(36))) ;
-            drawVLine(59+i, 479-height, height, WHITE);
-        }
-
-    }
-    PT_END(pt) ;
-}
-
-static PT_THREAD (protothread_blink(struct pt *pt))
-{
-    // Indicate beginning of thread
-    PT_BEGIN(pt) ;
-    while (1) {
-        // Toggle LED, then wait half a second
-        gpio_put(LED, !gpio_get(LED)) ;
-        PT_YIELD_usec(500000) ;
-    }
-    PT_END(pt) ;
-}
-
-// Core 1 entry point (main() for core 1)
-void core1_entry() {
-    // Add and schedule threads
-    pt_add_thread(protothread_blink) ;
-    pt_schedule_start ;
-}
-
 
 //=================================================================
 // Draw one point of the LED cube
@@ -530,6 +386,10 @@ void drawFFTLayer2(){
 
 void drawFFTLayer3(){
 
+  gpio_put(ROW_1, 0);
+  gpio_put(ROW_2, 0);
+  gpio_put(ROW_3, 0);
+  gpio_put(ROW_4, 0);
 
   u_int8_t col_val = 0b11110000;
   
@@ -546,10 +406,7 @@ void drawFFTLayer3(){
   // shift_register_write_bitmask(&col_4_reg, col_val);
   // shift_register_flush(&col_4_reg);
 
-  gpio_put(ROW_1, 0);
-  gpio_put(ROW_2, 0);
-  gpio_put(ROW_3, 0);
-  gpio_put(ROW_4, 0);
+
 }
 
 void drawFFTLayer4(){
@@ -570,7 +427,7 @@ void drawFFTLayer4(){
   // shift_register_write_bitmask(&col_4_reg, col_val);
   // shift_register_flush(&col_4_reg);
 
-  gpio_put(ROW_1, 1);
+  gpio_put(ROW_1, 0);
   gpio_put(ROW_2, 0);
   gpio_put(ROW_3, 0);
   gpio_put(ROW_4, 0);
@@ -594,7 +451,7 @@ void drawFFTLayer5(){
   // shift_register_write_bitmask(&col_4_reg, col_val);
   // shift_register_flush(&col_4_reg);
 
-  gpio_put(ROW_1, 0);
+  gpio_put(ROW_1, 1);
   gpio_put(ROW_2, 0);
   gpio_put(ROW_3, 0);
   gpio_put(ROW_4, 0);
@@ -642,7 +499,7 @@ void drawFFTLayer7(){
 
 
   shift_register_write_bitmask(&col_4_reg, col_val);
-  shift_register_flush(&col_2_reg);
+  shift_register_flush(&col_4_reg);
 
 
   gpio_put(ROW_1, 1);
@@ -678,6 +535,153 @@ void drawFancy0(){
   sleep_ms(500);
 }
 //=================================================================
+
+// Runs on core 0
+static PT_THREAD (protothread_fft(struct pt *pt))
+{
+    // Indicate beginning of thread
+    PT_BEGIN(pt) ;
+    printf("Starting capture\n") ;
+    // Start the ADC channel
+    dma_start_channel_mask((1u << sample_chan)) ;
+    // Start the ADC
+    adc_run(true) ;
+
+    // Declare some static variables
+    static int height ;             // for scaling display
+    static float max_freqency ;     // holds max frequency
+    static int i ;                  // incrementing loop variable
+
+    static fix15 max_fr ;           // temporary variable for max freq calculation
+    static int max_fr_dex ;         // index of max frequency
+
+    // Write some text to VGA
+    setTextColor(WHITE) ;
+    setCursor(65, 0) ;
+    setTextSize(1) ;
+    writeString("Raspberry Pi Pico") ;
+    setCursor(65, 10) ;
+    writeString("FFT demo") ;
+    setCursor(65, 20) ;
+    writeString("Hunter Adams") ;
+    setCursor(65, 30) ;
+    writeString("vha3@cornell.edu") ;
+    setCursor(250, 0) ;
+    setTextSize(2) ;
+    writeString("Max freqency:") ;
+
+    // Will be used to write dynamic text to screen
+    static char freqtext[40];
+
+
+    while(1) {
+        // Wait for NUM_SAMPLES samples to be gathered
+        // Measure wait time with timer. THIS IS BLOCKING
+        dma_channel_wait_for_finish_blocking(sample_chan);
+
+        // Copy/window elements into a fixed-point array
+        for (i=0; i<NUM_SAMPLES; i++) {
+            fr[i] = multfix15(int2fix15((int)sample_array[i]), window[i]) ;
+            fi[i] = (fix15) 0 ;
+        }
+
+        // Zero max frequency and max frequency index
+        max_fr = 0 ;
+        max_fr_dex = 0 ;
+
+        // Restart the sample channel, now that we have our copy of the samples
+        dma_channel_start(control_chan) ;
+
+        // Compute the FFT
+        FFTfix(fr, fi) ;
+
+        // Find the magnitudes (alpha max plus beta min)
+        for (int i = 0; i < (NUM_SAMPLES>>1); i++) {  
+            // get the approx magnitude
+            fr[i] = abs(fr[i]); 
+            fi[i] = abs(fi[i]);
+            // reuse fr to hold magnitude
+            fr[i] = max(fr[i], fi[i]) + 
+                    multfix15(min(fr[i], fi[i]), zero_point_4); 
+
+            // Keep track of maximum
+            if (fr[i] > max_fr && i>4) {
+                max_fr = fr[i] ;
+                max_fr_dex = i ;
+            }
+        }
+        // Compute max frequency in Hz
+        max_freqency = max_fr_dex * (Fs/NUM_SAMPLES) ;
+
+        if(max_freqency < 250){
+          drawFFTLayer0();
+          sleep_ms(200);
+        }else if(max_freqency < 500){
+          drawFFTLayer1();
+          sleep_ms(200);
+        }else if(max_freqency < 750){
+          drawFFTLayer2();
+          sleep_ms(200);
+        }else if(max_freqency < 1000){
+          drawFFTLayer3();
+          sleep_ms(200);
+        }else if(max_freqency < 1250){
+          drawFFTLayer4();
+          sleep_ms(200);
+        }else if(max_freqency < 1500){
+          drawFFTLayer5();
+          sleep_ms(200);
+        }else if(max_freqency < 1750){
+          drawFFTLayer6();
+          sleep_ms(200);
+        }else if(max_freqency < 2000){
+          drawFFTLayer7();
+          sleep_ms(200);
+        }
+
+
+        // Display on VGA
+        fillRect(250, 20, 176, 30, BLACK); // red box
+        sprintf(freqtext, "%d", (int)max_freqency) ;
+        setCursor(250, 20) ;
+        setTextSize(2) ;
+        writeString(freqtext) ;
+
+
+
+
+        // Update the FFT display
+        for (int i=5; i<(NUM_SAMPLES>>1); i++) {
+            drawVLine(59+i, 50, 429, BLACK);
+            height = fix2int15(multfix15(fr[i], int2fix15(36))) ;
+            drawVLine(59+i, 479-height, height, WHITE);
+        }
+
+    }
+    PT_END(pt) ;
+}
+
+static PT_THREAD (protothread_blink(struct pt *pt))
+{
+    // Indicate beginning of thread
+    PT_BEGIN(pt) ;
+    while (1) {
+        // Toggle LED, then wait half a second
+        gpio_put(LED, !gpio_get(LED)) ;
+        PT_YIELD_usec(500000) ;
+    }
+    PT_END(pt) ;
+}
+
+// Core 1 entry point (main() for core 1)
+void core1_entry() {
+    // Add and schedule threads
+    pt_add_thread(protothread_blink) ;
+    pt_schedule_start ;
+}
+
+
+
 
 void main()
 {
@@ -721,7 +725,7 @@ void main()
   gpio_set_dir(ROW_4, GPIO_OUT);
 
 
-  drawFancy0();
+  //drawFancy0();
   //=================================================================
 
 
@@ -818,6 +822,8 @@ void main()
       1,                                  // Number of transfers, in this case each is 4 byte
       false                               // Don't start immediately.
   );
+
+  drawFancy0();
 
   // Launch core 1
   multicore_launch_core1(core1_entry);

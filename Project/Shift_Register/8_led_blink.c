@@ -413,6 +413,18 @@ void drawFancy0(){
   shift_register_write_bitmask(&col_4_reg, col_val);
   shift_register_flush(&col_4_reg);
   sleep_ms(500);
+
+  shift_register_write_bitmask(&col_3_reg, col_val);
+  shift_register_flush(&col_3_reg);
+  sleep_ms(500);
+
+  shift_register_write_bitmask(&col_2_reg, col_val);
+  shift_register_flush(&col_2_reg);
+  sleep_ms(500);
+
+  shift_register_write_bitmask(&col_1_reg, col_val);
+  shift_register_flush(&col_1_reg);
+  sleep_ms(500);
 }
 
 void drawOnePoint(int x, int y, int z){
