@@ -317,17 +317,29 @@ static PT_THREAD (protothread_fft(struct pt *pt))
         // Compute max frequency in Hz
         max_freqency = max_fr_dex * (Fs/NUM_SAMPLES) ;
 
-        if(max_freqency < 500){
+        if(max_freqency < 250){
           drawFFTLayer0();
           sleep_ms(200);
-        }else if(max_freqency < 1000){
+        }else if(max_freqency < 500){
           drawFFTLayer1();
           sleep_ms(200);
-        }else if(max_freqency < 1500){
+        }else if(max_freqency < 750){
           drawFFTLayer2();
           sleep_ms(200);
-        }else if(max_freqency < 2000){
+        }else if(max_freqency < 1000){
           drawFFTLayer3();
+          sleep_ms(200);
+        }else if(max_freqency < 1250){
+          drawFFTLayer4();
+          sleep_ms(200);
+        }else if(max_freqency < 1500){
+          drawFFTLayer5();
+          sleep_ms(200);
+        }else if(max_freqency < 1750){
+          drawFFTLayer6();
+          sleep_ms(200);
+        }else if(max_freqency < 2000){
+          drawFFTLayer7();
           sleep_ms(200);
         }
 
@@ -707,6 +719,9 @@ void main()
 
   gpio_init(ROW_4);
   gpio_set_dir(ROW_4, GPIO_OUT);
+
+
+  drawFancy0();
   //=================================================================
 
 
