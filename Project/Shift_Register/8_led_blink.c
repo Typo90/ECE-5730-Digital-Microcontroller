@@ -50,16 +50,30 @@ ShiftRegister col_4_reg;
 
 
 void testRow(){
-  u_int8_t col_val = 0b10000000;
-  
-  gpio_put(ROW_1, 0);
-  gpio_put(ROW_2, 1);
-  gpio_put(ROW_3, 1);
-  gpio_put(ROW_4, 1);
 
+
+  u_int8_t col_val = 0b11110000;
 
   shift_register_write_bitmask(&col_1_reg, col_val);
   shift_register_flush(&col_1_reg);
+
+
+  shift_register_write_bitmask(&col_2_reg, col_val);
+  shift_register_flush(&col_2_reg);
+
+
+  shift_register_write_bitmask(&col_3_reg, col_val);
+  shift_register_flush(&col_3_reg);
+
+
+  shift_register_write_bitmask(&col_4_reg, col_val);
+  shift_register_flush(&col_2_reg);
+
+
+  gpio_put(ROW_1, 1);
+  gpio_put(ROW_2, 1);
+  gpio_put(ROW_3, 1);
+  gpio_put(ROW_4, 0);
 
 }
 
@@ -176,6 +190,231 @@ void lineByLine(){
     sleep_ms(1050);
 }
 
+void drawFFTLayer0(){
+
+
+  u_int8_t col_val = 0b11110000;
+
+  shift_register_write_bitmask(&col_1_reg, col_val);
+  shift_register_flush(&col_1_reg);
+
+
+  // shift_register_write_bitmask(&col_2_reg, col_val);
+  // shift_register_flush(&col_2_reg);
+
+
+  // shift_register_write_bitmask(&col_3_reg, col_val);
+  // shift_register_flush(&col_3_reg);
+
+
+  // shift_register_write_bitmask(&col_4_reg, col_val);
+  // shift_register_flush(&col_2_reg);
+
+
+  gpio_put(ROW_1, 1);
+  gpio_put(ROW_2, 1);
+  gpio_put(ROW_3, 1);
+  gpio_put(ROW_4, 0);
+    
+}
+
+void drawFFTLayer1(){
+
+
+  u_int8_t col_val = 0b11110000;
+
+  // shift_register_write_bitmask(&col_1_reg, col_val);
+  // shift_register_flush(&col_1_reg);
+
+  shift_register_write_bitmask(&col_2_reg, col_val);
+  shift_register_flush(&col_2_reg);
+
+  // shift_register_write_bitmask(&col_3_reg, col_val);
+  // shift_register_flush(&col_3_reg);
+
+  // shift_register_write_bitmask(&col_4_reg, col_val);
+  // shift_register_flush(&col_4_reg);
+
+
+  gpio_put(ROW_1, 1);
+  gpio_put(ROW_2, 1);
+  gpio_put(ROW_3, 0);
+  gpio_put(ROW_4, 0);
+}
+
+void drawFFTLayer2(){
+
+
+  u_int8_t col_val = 0b11110000;
+
+  // shift_register_write_bitmask(&col_1_reg, col_val);
+  // shift_register_flush(&col_1_reg);
+
+  shift_register_write_bitmask(&col_2_reg, col_val);
+  shift_register_flush(&col_2_reg);
+
+  //shift_register_write_bitmask(&col_3_reg, col_val);
+  //shift_register_flush(&col_3_reg);
+
+  // shift_register_write_bitmask(&col_4_reg, col_val);
+  // shift_register_flush(&col_4_reg);
+
+  gpio_put(ROW_1, 1);
+  gpio_put(ROW_2, 0);
+  gpio_put(ROW_3, 0);
+  gpio_put(ROW_4, 0);
+}
+
+void drawFFTLayer3(){
+
+
+  u_int8_t col_val = 0b11110000;
+  
+
+  // shift_register_write_bitmask(&col_1_reg, col_val);
+  // shift_register_flush(&col_1_reg);
+
+  shift_register_write_bitmask(&col_2_reg, col_val);
+  shift_register_flush(&col_2_reg);
+
+  // shift_register_write_bitmask(&col_3_reg, col_val);
+  // shift_register_flush(&col_3_reg);
+
+  // shift_register_write_bitmask(&col_4_reg, col_val);
+  // shift_register_flush(&col_4_reg);
+
+  gpio_put(ROW_1, 0);
+  gpio_put(ROW_2, 0);
+  gpio_put(ROW_3, 0);
+  gpio_put(ROW_4, 0);
+}
+
+void drawFFTLayer4(){
+
+
+  u_int8_t col_val = 0b11110000;
+  
+
+  // shift_register_write_bitmask(&col_1_reg, col_val);
+  // shift_register_flush(&col_1_reg);
+
+  // shift_register_write_bitmask(&col_2_reg, col_val);
+  // shift_register_flush(&col_2_reg);
+
+  shift_register_write_bitmask(&col_3_reg, col_val);
+  shift_register_flush(&col_3_reg);
+
+  // shift_register_write_bitmask(&col_4_reg, col_val);
+  // shift_register_flush(&col_4_reg);
+
+  gpio_put(ROW_1, 1);
+  gpio_put(ROW_2, 0);
+  gpio_put(ROW_3, 0);
+  gpio_put(ROW_4, 0);
+}
+
+void drawFFTLayer5(){
+
+
+  u_int8_t col_val = 0b11110000;
+  
+
+  // shift_register_write_bitmask(&col_1_reg, col_val);
+  // shift_register_flush(&col_1_reg);
+
+  // shift_register_write_bitmask(&col_2_reg, col_val);
+  // shift_register_flush(&col_2_reg);
+
+  shift_register_write_bitmask(&col_3_reg, col_val);
+  shift_register_flush(&col_3_reg);
+
+  // shift_register_write_bitmask(&col_4_reg, col_val);
+  // shift_register_flush(&col_4_reg);
+
+  gpio_put(ROW_1, 0);
+  gpio_put(ROW_2, 0);
+  gpio_put(ROW_3, 0);
+  gpio_put(ROW_4, 0);
+}
+
+void drawFFTLayer6(){
+
+
+  u_int8_t col_val = 0b11110000;
+
+  // shift_register_write_bitmask(&col_1_reg, col_val);
+  // shift_register_flush(&col_1_reg);
+
+  // shift_register_write_bitmask(&col_2_reg, col_val);
+  // shift_register_flush(&col_2_reg);
+
+  shift_register_write_bitmask(&col_3_reg, col_val);
+  shift_register_flush(&col_3_reg);
+
+  // shift_register_write_bitmask(&col_4_reg, col_val);
+  // shift_register_flush(&col_4_reg);
+
+
+  gpio_put(ROW_1, 1);
+  gpio_put(ROW_2, 1);
+  gpio_put(ROW_3, 0);
+  gpio_put(ROW_4, 0);
+}
+
+void drawFFTLayer7(){
+
+
+  u_int8_t col_val = 0b11110000;
+
+  // shift_register_write_bitmask(&col_1_reg, col_val);
+  // shift_register_flush(&col_1_reg);
+
+
+  // shift_register_write_bitmask(&col_2_reg, col_val);
+  // shift_register_flush(&col_2_reg);
+
+
+  // shift_register_write_bitmask(&col_3_reg, col_val);
+  // shift_register_flush(&col_3_reg);
+
+
+  shift_register_write_bitmask(&col_4_reg, col_val);
+  shift_register_flush(&col_2_reg);
+
+
+  gpio_put(ROW_1, 1);
+  gpio_put(ROW_2, 1);
+  gpio_put(ROW_3, 1);
+  gpio_put(ROW_4, 0);
+    
+}
+
+
+void drawFancy0(){
+  u_int8_t col_val = 0b11110000;
+
+  gpio_put(ROW_1, 0);
+  gpio_put(ROW_2, 0);
+  gpio_put(ROW_3, 0);
+  gpio_put(ROW_4, 0);
+
+  shift_register_write_bitmask(&col_1_reg, col_val);
+  shift_register_flush(&col_1_reg);
+  sleep_ms(500);
+
+  shift_register_write_bitmask(&col_2_reg, col_val);
+  shift_register_flush(&col_2_reg);
+  sleep_ms(500);
+
+  shift_register_write_bitmask(&col_3_reg, col_val);
+  shift_register_flush(&col_3_reg);
+  sleep_ms(500);
+
+  shift_register_write_bitmask(&col_4_reg, col_val);
+  shift_register_flush(&col_4_reg);
+  sleep_ms(500);
+}
+
 void drawOnePoint(int x, int y, int z){
     if(x > 4 || x < 0 || y > 4 || y < 0){
       return;
@@ -231,10 +470,15 @@ void main()
       .SHIFT_REGISTER_CLOCK_PIN = 10,
       .STORAGE_REGISTER_CLOCK_PIN = 11});
 
+  // col_2_reg = shift_register_new((PinConfig){
+  //     .SERIAL_PIN = 13,
+  //     .SHIFT_REGISTER_CLOCK_PIN = 10,
+  //     .STORAGE_REGISTER_CLOCK_PIN = 11});
+
   col_2_reg = shift_register_new((PinConfig){
-      .SERIAL_PIN = 13,
-      .SHIFT_REGISTER_CLOCK_PIN = 10,
-      .STORAGE_REGISTER_CLOCK_PIN = 11});
+    .SERIAL_PIN = 13,
+    .SHIFT_REGISTER_CLOCK_PIN = 8,
+    .STORAGE_REGISTER_CLOCK_PIN = 11});
 
   col_3_reg = shift_register_new((PinConfig){
       .SERIAL_PIN = 12,
@@ -259,18 +503,42 @@ void main()
   gpio_init(ROW_4);
   gpio_set_dir(ROW_4, GPIO_OUT);
 
+
+  drawFancy0();
   while(true){
 
-    for(int i = 0; i<4; i++){
-      for(int j = 0; j<4; j++){
-        for(int k = 0; k<4; k++){
-          drawOnePoint(i, j, k);
-          sleep_ms(250);
-        }
-      }
-    }
 
-    //testRow();
+
+    // for(int i = 0; i<4; i++){
+    //   for(int j = 0; j<4; j++){
+    //     for(int k = 0; k<4; k++){
+    //       drawOnePoint(i, j, k);
+    //       sleep_ms(250);
+    //     }
+    //   }
+    // }
+
+
+
+    // drawFFTLayer0();
+    // sleep_ms(500);
+    // drawFFTLayer1();
+    // sleep_ms(250);
+    // drawFFTLayer2();
+    // sleep_ms(250);
+    // drawFFTLayer3();
+    // sleep_ms(250);
+    // drawFFTLayer4();
+    // sleep_ms(250);
+    // drawFFTLayer5();
+    // sleep_ms(250);
+    // drawFFTLayer6();
+    // sleep_ms(250);
+    // drawFFTLayer7();
+    // sleep_ms(500);
+
+
+    testRow();
 
     //drawOnePoint(0, 0, 0);
 

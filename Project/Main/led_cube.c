@@ -317,12 +317,30 @@ static PT_THREAD (protothread_fft(struct pt *pt))
         // Compute max frequency in Hz
         max_freqency = max_fr_dex * (Fs/NUM_SAMPLES) ;
 
+        if(max_freqency < 500){
+          drawFFTLayer0();
+          sleep_ms(200);
+        }else if(max_freqency < 1000){
+          drawFFTLayer1();
+          sleep_ms(200);
+        }else if(max_freqency < 1500){
+          drawFFTLayer2();
+          sleep_ms(200);
+        }else if(max_freqency < 2000){
+          drawFFTLayer3();
+          sleep_ms(200);
+        }
+
+
         // Display on VGA
         fillRect(250, 20, 176, 30, BLACK); // red box
         sprintf(freqtext, "%d", (int)max_freqency) ;
         setCursor(250, 20) ;
         setTextSize(2) ;
         writeString(freqtext) ;
+
+
+
 
         // Update the FFT display
         for (int i=5; i<(NUM_SAMPLES>>1); i++) {
@@ -421,6 +439,231 @@ void drawOnePoint(int x, int y, int z){
       shift_register_flush(&col_4_reg);
     }
 
+}
+
+void drawFFTLayer0(){
+
+
+  u_int8_t col_val = 0b11110000;
+
+  shift_register_write_bitmask(&col_1_reg, col_val);
+  shift_register_flush(&col_1_reg);
+
+
+  // shift_register_write_bitmask(&col_2_reg, col_val);
+  // shift_register_flush(&col_2_reg);
+
+
+  // shift_register_write_bitmask(&col_3_reg, col_val);
+  // shift_register_flush(&col_3_reg);
+
+
+  // shift_register_write_bitmask(&col_4_reg, col_val);
+  // shift_register_flush(&col_2_reg);
+
+
+  gpio_put(ROW_1, 1);
+  gpio_put(ROW_2, 1);
+  gpio_put(ROW_3, 1);
+  gpio_put(ROW_4, 0);
+    
+}
+
+void drawFFTLayer1(){
+
+
+  u_int8_t col_val = 0b11110000;
+
+  // shift_register_write_bitmask(&col_1_reg, col_val);
+  // shift_register_flush(&col_1_reg);
+
+  shift_register_write_bitmask(&col_2_reg, col_val);
+  shift_register_flush(&col_2_reg);
+
+  // shift_register_write_bitmask(&col_3_reg, col_val);
+  // shift_register_flush(&col_3_reg);
+
+  // shift_register_write_bitmask(&col_4_reg, col_val);
+  // shift_register_flush(&col_4_reg);
+
+
+  gpio_put(ROW_1, 1);
+  gpio_put(ROW_2, 1);
+  gpio_put(ROW_3, 0);
+  gpio_put(ROW_4, 0);
+}
+
+void drawFFTLayer2(){
+
+
+  u_int8_t col_val = 0b11110000;
+
+  // shift_register_write_bitmask(&col_1_reg, col_val);
+  // shift_register_flush(&col_1_reg);
+
+  shift_register_write_bitmask(&col_2_reg, col_val);
+  shift_register_flush(&col_2_reg);
+
+  //shift_register_write_bitmask(&col_3_reg, col_val);
+  //shift_register_flush(&col_3_reg);
+
+  // shift_register_write_bitmask(&col_4_reg, col_val);
+  // shift_register_flush(&col_4_reg);
+
+  gpio_put(ROW_1, 1);
+  gpio_put(ROW_2, 0);
+  gpio_put(ROW_3, 0);
+  gpio_put(ROW_4, 0);
+}
+
+void drawFFTLayer3(){
+
+
+  u_int8_t col_val = 0b11110000;
+  
+
+  // shift_register_write_bitmask(&col_1_reg, col_val);
+  // shift_register_flush(&col_1_reg);
+
+  shift_register_write_bitmask(&col_2_reg, col_val);
+  shift_register_flush(&col_2_reg);
+
+  // shift_register_write_bitmask(&col_3_reg, col_val);
+  // shift_register_flush(&col_3_reg);
+
+  // shift_register_write_bitmask(&col_4_reg, col_val);
+  // shift_register_flush(&col_4_reg);
+
+  gpio_put(ROW_1, 0);
+  gpio_put(ROW_2, 0);
+  gpio_put(ROW_3, 0);
+  gpio_put(ROW_4, 0);
+}
+
+void drawFFTLayer4(){
+
+
+  u_int8_t col_val = 0b11110000;
+  
+
+  // shift_register_write_bitmask(&col_1_reg, col_val);
+  // shift_register_flush(&col_1_reg);
+
+  // shift_register_write_bitmask(&col_2_reg, col_val);
+  // shift_register_flush(&col_2_reg);
+
+  shift_register_write_bitmask(&col_3_reg, col_val);
+  shift_register_flush(&col_3_reg);
+
+  // shift_register_write_bitmask(&col_4_reg, col_val);
+  // shift_register_flush(&col_4_reg);
+
+  gpio_put(ROW_1, 1);
+  gpio_put(ROW_2, 0);
+  gpio_put(ROW_3, 0);
+  gpio_put(ROW_4, 0);
+}
+
+void drawFFTLayer5(){
+
+
+  u_int8_t col_val = 0b11110000;
+  
+
+  // shift_register_write_bitmask(&col_1_reg, col_val);
+  // shift_register_flush(&col_1_reg);
+
+  // shift_register_write_bitmask(&col_2_reg, col_val);
+  // shift_register_flush(&col_2_reg);
+
+  shift_register_write_bitmask(&col_3_reg, col_val);
+  shift_register_flush(&col_3_reg);
+
+  // shift_register_write_bitmask(&col_4_reg, col_val);
+  // shift_register_flush(&col_4_reg);
+
+  gpio_put(ROW_1, 0);
+  gpio_put(ROW_2, 0);
+  gpio_put(ROW_3, 0);
+  gpio_put(ROW_4, 0);
+}
+
+void drawFFTLayer6(){
+
+
+  u_int8_t col_val = 0b11110000;
+
+  // shift_register_write_bitmask(&col_1_reg, col_val);
+  // shift_register_flush(&col_1_reg);
+
+  // shift_register_write_bitmask(&col_2_reg, col_val);
+  // shift_register_flush(&col_2_reg);
+
+  shift_register_write_bitmask(&col_3_reg, col_val);
+  shift_register_flush(&col_3_reg);
+
+  // shift_register_write_bitmask(&col_4_reg, col_val);
+  // shift_register_flush(&col_4_reg);
+
+
+  gpio_put(ROW_1, 1);
+  gpio_put(ROW_2, 1);
+  gpio_put(ROW_3, 0);
+  gpio_put(ROW_4, 0);
+}
+
+void drawFFTLayer7(){
+
+
+  u_int8_t col_val = 0b11110000;
+
+  // shift_register_write_bitmask(&col_1_reg, col_val);
+  // shift_register_flush(&col_1_reg);
+
+
+  // shift_register_write_bitmask(&col_2_reg, col_val);
+  // shift_register_flush(&col_2_reg);
+
+
+  // shift_register_write_bitmask(&col_3_reg, col_val);
+  // shift_register_flush(&col_3_reg);
+
+
+  shift_register_write_bitmask(&col_4_reg, col_val);
+  shift_register_flush(&col_2_reg);
+
+
+  gpio_put(ROW_1, 1);
+  gpio_put(ROW_2, 1);
+  gpio_put(ROW_3, 1);
+  gpio_put(ROW_4, 0);
+    
+}
+
+
+void drawFancy0(){
+  u_int8_t col_val = 0b11110000;
+
+  gpio_put(ROW_1, 0);
+  gpio_put(ROW_2, 0);
+  gpio_put(ROW_3, 0);
+  gpio_put(ROW_4, 0);
+
+  shift_register_write_bitmask(&col_1_reg, col_val);
+  shift_register_flush(&col_1_reg);
+  sleep_ms(500);
+
+  shift_register_write_bitmask(&col_2_reg, col_val);
+  shift_register_flush(&col_2_reg);
+  sleep_ms(500);
+
+  shift_register_write_bitmask(&col_3_reg, col_val);
+  shift_register_flush(&col_3_reg);
+  sleep_ms(500);
+
+  shift_register_write_bitmask(&col_4_reg, col_val);
+  shift_register_flush(&col_4_reg);
+  sleep_ms(500);
 }
 //=================================================================
 

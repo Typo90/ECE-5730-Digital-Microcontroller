@@ -48,6 +48,13 @@ static bool _flush_shift_register(ShiftRegister *reg)
   return true;
 }
 
+static bool _flush_shift_register_all(ShiftRegister *reg1, ShiftRegister *reg2, ShiftRegister *reg3, ShiftRegister *reg4)
+{
+  gpio_put(reg1->STORAGE_REGISTER_CLOCK_PIN, 1);
+  gpio_put(reg1->STORAGE_REGISTER_CLOCK_PIN, 0);
+  return true;
+}
+
 static bool _reset_shift_register(ShiftRegister *reg)
 {
 
